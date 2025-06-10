@@ -24,5 +24,3 @@ function refreshAccessToken() {
 		exit 1
 	fi
 }
-
-refreshAccessToken
