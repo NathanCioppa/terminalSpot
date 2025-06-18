@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source ./requestGet.sh
+response=$(requestGet "/me") || exit 1
+echo "$response" | jq -r '.display_name' || exit 1

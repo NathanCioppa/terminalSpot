@@ -2,21 +2,11 @@
 
 source ./authorization.sh
 baseEndpoint="https://api.spotify.com/v1"
-
-authBear="Authorization: Bearer"
-accessToken=$(refreshAccessToken)
-
-function getUserInfo() {
-	response=$(requestGet "/me")
-
-	echo "$response"
-}
-
 function requestGet() {
 	endpoint="$1"
 	response=$(curl -s -w "\n%{http_code}" -X GET \
 		--url "$baseEndpoint$endpoint" \
-		--header "$authBear $accessToken"
+		--header "Authorization: Bearer $accessToken"
 	)
 	httpCode=$(echo "$response" | tail -n1)
 	body=$(echo "$response" | sed '$d')
@@ -29,9 +19,10 @@ function requestGet() {
 		else
 			exit 1
 		fi
-	else # the request was unsuccessful
+	elif [[ "$httpCode" -eq 401 ]]; then
+		accessToken=$(refreshAccessToken)
+		requestGet "$1"
+	else 
 		exit 1
 	fi
 }
-
-getUserInfo
