@@ -1,5 +1,6 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/requestGet.sh"
 
-source ./requestGet.sh
 response=$(requestGet "/me") || exit 1
 echo "$response" | jq -r '.display_name' || exit 1

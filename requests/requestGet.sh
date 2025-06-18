@@ -1,7 +1,9 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/authorization.sh"
 
-source ./authorization.sh
 baseEndpoint="https://api.spotify.com/v1"
+
 function requestGet() {
 	endpoint="$1"
 	response=$(curl -s -w "\n%{http_code}" -X GET \
