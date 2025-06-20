@@ -14,7 +14,7 @@ int main() {
 }
 
 int drawName(int x, int y) {
-	FILE *fp = popen("./requests/getUserInfo", "r");
+	FILE *fp = popen("./scripts/getUserInfo", "r");
 	char buffer[31]; // maximum allowed display name by spotify is 30 characters, 31 allows space for terminating char.
 
 	if (fp) {
