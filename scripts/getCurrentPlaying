@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# spotify docs for user's currently playing track:
+# https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/requestGet.sh"
+source "$SCRIPT_DIR/pullArtists.sh"
+source "$SCRIPT_DIR/getImage.sh"
+
+response=$(requestGet "/me/player/currently-playing") || exit 1
+item=$(echo "$response" | jq -r '.item') # the thing that is playing, usually a song or an episode (podcast)
+itemType=$(echo "$response" | jq -r '.currently_playing_type')
+
+function handleTrack() {
+	name=$(echo "$item" | jq -r '.name')
+	artists=$(pullArtistNames "$item")
+	imageUrl=$(getAlbumImageUrl "$item")
+	progress=$(echo "$response" | jq -r '.progress_ms')
+	length=$(echo "$item" | jq -r '.duration_ms')
+	echo "$progress"
+	echo "$length"
+	echo "$imageUrl"
+	echo "$name"
+	echo "$artists"
+}
+
+function handleEpisode() {
+echo "episode"	
+}
+
+case "$itemType" in
+	"track")
+		handleTrack ;;
+	"episode")
+		handleEpisode ;;
+esac
+# every case above should exit.
+# if that does not happen, whatever program calls this script should assume it failed.
+exit 1
+
