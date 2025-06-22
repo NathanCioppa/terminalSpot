@@ -7,8 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/requestGet.sh"
 source "$SCRIPT_DIR/pullArtists.sh"
 source "$SCRIPT_DIR/getImage.sh"
+source "$SCRIPT_DIR/newLineList.sh"
 
-response=$(requestGet "/me/player/currently-playing") || exit 1
+response=$(requestGet "/me/player/currently-playing?additional_types=episode") || exit 1
 item=$(echo "$response" | jq -r '.item') # the thing that is playing, usually a song or an episode (podcast)
 itemType=$(echo "$response" | jq -r '.currently_playing_type')
 
@@ -18,15 +19,14 @@ function handleTrack() {
 	imageUrl=$(getAlbumImageUrl "$item")
 	progress=$(echo "$response" | jq -r '.progress_ms')
 	length=$(echo "$item" | jq -r '.duration_ms')
-	echo "$progress"
-	echo "$length"
-	echo "$imageUrl"
-	echo "$name"
-	echo "$artists"
 }
 
 function handleEpisode() {
-echo "episode"	
+	name=$(echo "$item" | jq -r '.name')
+	artists=$(echo "$item" | jq -r '.show.publisher')
+	imageUrl=$(getFirstImageUrl "$item")
+	progress=$(echo "$response" | jq -r '.progress_ms')
+	length=$(echo "$item" | jq -r '.duration_ms')
 }
 
 case "$itemType" in
@@ -34,8 +34,9 @@ case "$itemType" in
 		handleTrack ;;
 	"episode")
 		handleEpisode ;;
+	*)
+		exit 1 ;;
 esac
-# every case above should exit.
-# if that does not happen, whatever program calls this script should assume it failed.
-exit 1
 
+# functions that handle item types should set all variables the are needed below
+newLineList "$name" "$artists" "$imageUrl" "$progress" "$length"
