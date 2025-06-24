@@ -77,42 +77,10 @@ int drawCurrentPlaying(int row, int col) {
 		return 0;
 	}
 
-	char *name = strtok(newLineList, "\n");
-	char *artist = strtok(NULL, "\n");
-	char *imageUrl = strtok(NULL, "\n");
-	char *progressMs = strtok(NULL, "\n");
-	char *durationMs = strtok(NULL, "\n");
-
-	char command[256];
-	snprintf(command, sizeof(command), "./scripts/generateImage %s", imageUrl);
-	fp = popen(command, "r");
-
-	if(!fp){
-		free(newLineList);
-		return 0;
-	}
-	char *image = readAllFromFile(fp);
-	status = pclose(fp);
-	if(image == NULL || !WIFEXITED(status) || WEXITSTATUS(status)) {
-		free(image);	
-		return 0;
-	}
-		
-
 	move(row, col);
-	printw("%s", name);
-	move(row+1,col);
-	printw("%s", artist);
-	move(row+2,col);
-	printw("%s", image);
+	printw("%s", newLineList);
 
 	free(newLineList);
 
 	return 1;	
 }
-
-
-
-
-
-
