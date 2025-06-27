@@ -9,15 +9,25 @@ function set_name() {
 	draw_name
 }
 function draw_name() {
-	tput cup "$firstInfoRow" 0
+	nameLength="${#name}"
+	# dont let string wrap to the next line
+	[[ "$nameLengh" -gt "$cols" ]] && name="${name:0:cols}" && nameLength="$cols"
+	# position so string is centered
+	tput cup "$firstInfoRow" "$(( $((cols / 2)) - $((nameLength / 2)) ))"
+	tput el; tput el1 # clear entire line
+	tput bold
 	echo "$name"
+	tput sgr0
 }
 function set_artists() {
 	artists="$(grep '^ARTIST ' /tmp/librespotTrack | cut -d' ' -f2-)"
 	draw_artists
 }
 function draw_artists() {
-	tput cup "$((firstInfoRow + 1))" 0
+	artistsLength="${#artists}"
+	[[ "$artistsLength" -gt "$cols" ]] && artists="${artists:0:cols}" && artistsLength="$cols" 
+	tput cup "$((firstInfoRow + 1))" "$(( $((cols / 2)) - $((artistsLength / 2)) ))"
+	tput el; tput el1
 	echo "$artists"
 }
 function set_duration() {
@@ -45,11 +55,10 @@ function set_pause_state() {
 	pauseState="$(cat /tmp/librespotPauseState)"
 }
 function draw_display() {
-	clear
-	draw_image
+	tput clear
+	set_image
 	draw_name
 	draw_artists
-
 }
 
 
@@ -93,10 +102,13 @@ while true; do
 		draw_display
 	fi
 	case "$event" in
+		# track_changed and playing usually get sent at about the same time, with playing always being called last.
+		# Sometimes, one or the other is not sent for some reason.
+		# Use both the update new track info that track_changed updates to avoid display not updating.
 		#"track_changed")
-			#set_name
-			#set_artists
-			#set_image & ;;
+		#	set_name
+		#	set_artists
+		#	set_image & ;;
 		"playing" | "paused")
 			set_name
 			set_artists
