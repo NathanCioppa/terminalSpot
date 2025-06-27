@@ -13,9 +13,17 @@ function set_artists() {
 function set_duration() {
 	duration="$(grep '^DURATION ' /tmp/librespotTrack | cut -d' ' -f2-)"
 }
-function set_image() {
+function draw_image() {
 	imageUrl="$(grep '^IMAGE_URL ' /tmp/librespotTrack | cut -d' ' -f2-)"
-	image="$(ascii-image-converter "$imageUrl" -C -c --color-bg -d 60,30)"
+	# full contents have some junk in the first line, must be discarded else padding is messed up.
+	image="$(ascii-image-converter "$imageUrl" -C -c --color-bg -d "$((imageSize * 2)),$imageSize" | tail -n +2)"
+	# image will not print correctly by changing column with tput, so pad columns manually
+	paddedImage="$(printf '%s\n' "$image" | sed "s/^/$(printf '%*s' "$imageCol")/")"
+	
+	tput cup "$imageRow" 0 
+	printf "%b\n" "$paddedImage"
+	tput cup "$((rows - minInfoRows))" 0
+
 }
 function set_position() {
 	position="$(cat /tmp/librespotPosition)"
@@ -25,16 +33,37 @@ function set_pause_state() {
 }
 function draw_display() {
 	clear
-	echo "$image"
+	draw_image
 	echo "$name"
 	echo "$artists"
 
 }
+
+
+function set_size_vars() {
+	minInfoRows=3 # number of lines below album art that should be free for other info.
+	rows="$(tput lines)"
+	cols="$(tput cols)"
+
+	# image will be a square, imageSize is length of each side in row heights,
+	# (assuming column width is half of a row's height)
+	if (( "$((rows - minInfoRows))" < "$((cols / 2))" )); then
+		imageSize="$((rows - minInfoRows))" 
+		imageRow=0
+		imageCol="$(( $((cols / 2)) - imageSize ))"
+	else 
+		imageSize="$((cols / 2))"
+		imageRow="$(( $(( $(( rows - minInfoRows )) / 2 )) - $(( imageSize / 2 )) ))"
+		imageCol=0
+	fi
+}
+
 function initialize() {
+	set_size_vars
 	set_name
 	set_artists
 	set_duration
-	set_image
+	draw_image
 	set_position
 	set_pause_state
 
@@ -58,5 +87,6 @@ while true; do
 			set_image
 			set_artists;;
 	esac
+	set_size_vars
 	draw_display
 done
