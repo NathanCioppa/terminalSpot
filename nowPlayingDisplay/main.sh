@@ -19,6 +19,7 @@ function draw_name() {
 	echo "$name"
 	tput sgr0
 }
+
 function set_artists() {
 	artists="$(grep '^ARTIST ' /tmp/librespotTrack | cut -d' ' -f2-)"
 	draw_artists
@@ -30,9 +31,7 @@ function draw_artists() {
 	tput el; tput el1
 	echo "$artists"
 }
-function set_duration() {
-	duration="$(grep '^DURATION ' /tmp/librespotTrack | cut -d' ' -f2-)"
-}
+
 function set_image() {
 	imageUrl="$(grep '^IMAGE_URL ' /tmp/librespotTrack | cut -d' ' -f2-)"
 	# full contents have some junk in the first line, must be discarded else padding is messed up.
@@ -41,26 +40,30 @@ function set_image() {
 	paddedImage="$(printf '%s\n' "$image" | sed "s/^/$(printf '%*s' "$imageCol")/")"
 	draw_image
 }
-
 function draw_image() {
 	tput cup "$imageRow" 0 
 	printf "%b\n" "$paddedImage"
 	tput cup "$((rows - minInfoRows))" 0
 }
 
+function set_duration() {
+	duration="$(grep '^DURATION ' /tmp/librespotTrack | cut -d' ' -f2-)"
+}
+
 function set_position() {
 	position="$(cat /tmp/librespotPosition)"
 }
+
 function set_pause_state() {
 	pauseState="$(cat /tmp/librespotPauseState)"
 }
-function draw_display() {
+# Clear and redraw all elements. Usually done to adjust after a resize to clear prevent junk.
+function reset_display() {
 	tput clear
-	set_image
 	draw_name
 	draw_artists
+	set_image # set_image handles sizing the image, so just calling draw_image is not enough.
 }
-
 
 function set_size_vars() {
 	minInfoRows=3 # number of lines below album art that should be free for other info.
@@ -90,7 +93,7 @@ function initialize() {
 	#set_position
 	#set_pause_state
 
-	draw_display
+	reset_display
 }
 
 initialize
@@ -99,12 +102,10 @@ while true; do
 	read event < "$librespotEventsPipe"
 	if [ "$(tput lines)" != "$rows" ] || [ "$(tput cols)" != "$cols" ]; then
 		set_size_vars
-		draw_display
+		reset_display
 	fi
 	case "$event" in
 		# track_changed and playing usually get sent at about the same time, with playing always being called last.
-		# Sometimes, one or the other is not sent for some reason.
-		# Use both the update new track info that track_changed updates to avoid display not updating.
 		#"track_changed")
 		#	set_name
 		#	set_artists
@@ -112,7 +113,7 @@ while true; do
 		"playing" | "paused")
 			set_name
 			set_artists
-			set_image &
+			set_image & # takes a while, do it in background
 			set_position ;;
 
 		"seeked" | "position_correction")
