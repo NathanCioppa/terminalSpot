@@ -20,5 +20,5 @@ case "$PLAYER_EVENT" in
 esac
 
 for file in /tmp/librespotPipes/*; do
-	[[ -p "$file" ]] && echo "$PLAYER_EVENT" > "$file" &
+	[[ -p "$file" ]] && echo "$PLAYER_EVENT" > "$file"
 done

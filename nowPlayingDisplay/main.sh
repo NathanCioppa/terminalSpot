@@ -47,11 +47,31 @@ function draw_image() {
 }
 
 function set_duration() {
-	duration="$(grep '^DURATION ' /tmp/librespotTrack | cut -d' ' -f2-)"
+	durationMs="$(grep '^DURATION ' /tmp/librespotTrack | cut -d' ' -f2-)"
+	durationFullSecs="$((durationMs / 1000))"
+	durationOverflowSecs="$((durationFullSecs % 60))"
+	[[ "$durationOverflowSecs" -lt 10 ]] && durationOverflowSecs="0$durationOverflowSecs"
+	durationDisplay="$((durationFullSecs / 60)):$durationOverflowSecs"
+	draw_duration
 }
-
+function draw_duration() {
+	durationDisplaySize=${#durationDisplay}
+	durationCol="$((cols - durationDisplaySize))"
+	tput cup "$((firstInfoRow + 2 ))" "$durationCol"
+	echo "$durationDisplay"
+}
 function set_position() {
-	position="$(cat /tmp/librespotPosition)"
+	positionMs="$(cat /tmp/librespotPosition)"
+	draw_position
+}
+function draw_position() {
+	positionFullSecs="$((positionMs / 1000))"
+	positionOverflowSecs="$((positionFullSecs % 60))"
+	[[ "$positionOverflowSecs" -lt 10 ]] && positionOverflowSecs="0$positionOverflowSecs"
+	positionDisplay="$((positionFullSecs / 60)):$positionOverflowSecs"
+	positionDisplaySize=${#positionDisplay}
+	tput cup "$((firstInfoRow + 2))" 0
+	echo "$positionDisplay"
 }
 
 function set_pause_state() {
@@ -62,11 +82,13 @@ function reset_display() {
 	tput clear
 	draw_name
 	draw_artists
+	set_duration
+	draw_position
 	set_image # set_image handles sizing the image, so just calling draw_image is not enough.
 }
 
 function set_size_vars() {
-	minInfoRows=3 # number of lines below album art that should be free for other info.
+	minInfoRows=4 # number of lines below album art that should be free for other info.
 	rows="$(tput lines)"
 	cols="$(tput cols)"
 	firstInfoRow="$((rows - minInfoRows))"
@@ -88,10 +110,10 @@ function initialize() {
 	set_size_vars
 	set_name
 	set_artists
-	#set_duration
+	set_duration
 	set_image
-	#set_position
-	#set_pause_state
+	set_position
+#	set_pause_state
 
 	reset_display
 }
@@ -106,14 +128,12 @@ while true; do
 	fi
 	case "$event" in
 		# track_changed and playing usually get sent at about the same time, with playing always being called last.
-		#"track_changed")
-		#	set_name
-		#	set_artists
-		#	set_image & ;;
-		"playing" | "paused")
+		"track_changed")
 			set_name
 			set_artists
-			set_image & # takes a while, do it in background
+			set_duration
+			set_image & ;; # takes a while, do it in background
+		"playing" | "paused")
 			set_position ;;
 
 		"seeked" | "position_correction")
