@@ -46,49 +46,16 @@ function draw_image() {
 	tput cup "$((rows - minInfoRows))" 0
 }
 
-function set_duration() {
-	durationMs="$(grep '^DURATION ' /tmp/librespotTrack | cut -d' ' -f2-)"
-	durationFullSecs="$((durationMs / 1000))"
-	durationOverflowSecs="$((durationFullSecs % 60))"
-	[[ "$durationOverflowSecs" -lt 10 ]] && durationOverflowSecs="0$durationOverflowSecs"
-	durationDisplay="$((durationFullSecs / 60)):$durationOverflowSecs"
-	draw_duration
-}
-function draw_duration() {
-	durationDisplaySize=${#durationDisplay}
-	durationCol="$((cols - durationDisplaySize))"
-	tput cup "$((firstInfoRow + 2 ))" "$durationCol"
-	echo "$durationDisplay"
-}
-function set_position() {
-	positionMs="$(cat /tmp/librespotPosition)"
-	draw_position
-}
-function draw_position() {
-	positionFullSecs="$((positionMs / 1000))"
-	positionOverflowSecs="$((positionFullSecs % 60))"
-	[[ "$positionOverflowSecs" -lt 10 ]] && positionOverflowSecs="0$positionOverflowSecs"
-	positionDisplay="$((positionFullSecs / 60)):$positionOverflowSecs"
-	positionDisplaySize=${#positionDisplay}
-	tput cup "$((firstInfoRow + 2))" 0
-	echo "$positionDisplay"
-}
-
-function set_pause_state() {
-	pauseState="$(cat /tmp/librespotPauseState)"
-}
 # Clear and redraw all elements. Usually done to adjust after a resize to clear prevent junk.
 function reset_display() {
 	tput clear
 	draw_name
 	draw_artists
-	set_duration
-	draw_position
 	set_image # set_image handles sizing the image, so just calling draw_image is not enough.
 }
 
 function set_size_vars() {
-	minInfoRows=4 # number of lines below album art that should be free for other info.
+	minInfoRows=3 # number of lines below album art that should be free for other info.
 	rows="$(tput lines)"
 	cols="$(tput cols)"
 	firstInfoRow="$((rows - minInfoRows))"
@@ -110,16 +77,12 @@ function initialize() {
 	set_size_vars
 	set_name
 	set_artists
-	set_duration
 	set_image
-	set_position
-#	set_pause_state
 
 	reset_display
 }
 
 initialize
-
 while true; do
 	read event < "$librespotEventsPipe"
 	if [ "$(tput lines)" != "$rows" ] || [ "$(tput cols)" != "$cols" ]; then
@@ -131,12 +94,6 @@ while true; do
 		"track_changed")
 			set_name
 			set_artists
-			set_duration
 			set_image & ;; # takes a while, do it in background
-		"playing" | "paused")
-			set_position ;;
-
-		"seeked" | "position_correction")
-			set_position ;;
 	esac
 done
