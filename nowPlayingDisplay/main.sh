@@ -11,7 +11,7 @@ function set_name() {
 function draw_name() {
 	nameLength="${#name}"
 	# dont let string wrap to the next line
-	[[ "$nameLengh" -gt "$cols" ]] && name="${name:0:cols}" && nameLength="$cols"
+	[[ "$nameLength" -gt "$cols" ]] && name="${name:0:cols}" && nameLength="$cols"
 	# position so string is centered
 	tput cup "$firstInfoRow" "$(( $((cols / 2)) - $((nameLength / 2)) ))"
 	tput el; tput el1 # clear entire line
