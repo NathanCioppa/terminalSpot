@@ -63,24 +63,3 @@ char *readAllFromFile(FILE *fp) {
 	return buffer;
 	
 }
-
-int drawCurrentPlaying(int row, int col) {
-	FILE *fp = popen("./scripts/getCurrentPlaying", "r");
-
-	if (!fp)
-		return 0;
-	
-	char *newLineList = readAllFromFile(fp);
-	int status = pclose(fp);
-	if(newLineList == NULL || !WIFEXITED(status) || WEXITSTATUS(status)) {
-		free(newLineList);	
-		return 0;
-	}
-
-	move(row, col);
-	printw("%s", newLineList);
-
-	free(newLineList);
-
-	return 1;	
-}

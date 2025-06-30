@@ -1,30 +1,24 @@
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/authorization.sh"
+source "$SCRIPT_DIR/handleRequestResponse.sh"
 
 baseEndpoint="https://api.spotify.com/v1"
 
 function requestGet() {
 	endpoint="$1"
+
 	response=$(curl -s -w "\n%{http_code}" -X GET \
 		--url "$baseEndpoint$endpoint" \
 		--header "Authorization: Bearer $accessToken"
 	)
-	httpCode=$(echo "$response" | tail -n1)
-	body=$(echo "$response" | sed '$d')
 
-	if [[ "$httpCode" -eq 200 ]]; then
-		# echo body only if it is valid JSON
-		if jq -e . >/dev/null 2>&1 <<< "$body"; then
-			echo "$body"
-			exit 0
-		else
-			exit 1
-		fi
-	elif [[ "$httpCode" -eq 401 ]]; then
-		accessToken=$(refreshAccessToken)
-		requestGet "$1"
-	else 
-		exit 1
-	fi
+	body=$(checkResponse "$response") # echo's the body if successful, error code 64 means the access token is expired
+	case "$?" in
+		"0") echo "$body" ;;
+		"64") 
+		     refreshAccessToken
+		     requestGet "$endpoint" ;;
+		*) exit 1 ;;
+	esac
 }
