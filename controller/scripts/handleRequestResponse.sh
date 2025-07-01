@@ -14,7 +14,7 @@ function checkResponse() {
 			else
 				exit 1
 			fi ;;
-		"204") # put request succeeded, not output to write
+		"204") # put/post request sent, not output to write
 			exit 0 ;;
 		"401") # access token was invalid, but this can be handled, so dont exit
 			return 64 ;;
