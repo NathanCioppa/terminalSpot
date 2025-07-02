@@ -29,7 +29,7 @@ char *readAllFromFile(FILE *fp) {
 	return buffer;
 }
 
-// takes a null terminated array of strings, the command and its arguments in order.
+// takes a null terminated array of strings; the command and its arguments in order.
 char *formatCommandArr(char **command) {
 	size_t position = 0; 
 	size_t cmdStrSize = 128;

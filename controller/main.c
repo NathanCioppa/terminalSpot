@@ -7,7 +7,6 @@
 #include "utils.c"
 
 int drawName(int row, int col);
-char *readAllFromFile(FILE *fp);
 
 int main() {
 	initscr();
@@ -24,6 +23,7 @@ int drawName(int row, int col) {
 	char *command = formatCommandArr(cmdArr);
 
 	FILE *fp = popen(command, "r");
+	free(command);
 	char buffer[31]; // maximum allowed display name by spotify is 30 characters, 31 allows space for terminating char.
 
 	if (fp) {
