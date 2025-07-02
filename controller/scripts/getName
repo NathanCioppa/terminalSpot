@@ -1,0 +1,7 @@
+#!/bin/bash
+
+spotifyApiCmdDir="$1"
+
+userJson="$("$spotifyApiCmdDir/getUserInfo")" || exit 1
+displayName=$(echo "$userJson" | jq -r '.display_name') || exit 1
+echo "$displayName"

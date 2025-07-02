@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/requestPut.sh"
+source "$SCRIPT_DIR/helpers/requestPut.sh"
 
-requestPut "/me/player/play"
-
+requestPut "/me/player/pause"

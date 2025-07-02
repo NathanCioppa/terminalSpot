@@ -1,4 +1,0 @@
-#!/bin/bash
-
-imageUrl="$1"
-ascii-image-converter "$imageUrl" -C -c -d 60,30
