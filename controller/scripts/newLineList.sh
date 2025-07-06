@@ -6,5 +6,5 @@ function newLineList() {
 	for arg in "$@"; do
 		list+="${arg}"$'\n'
 	done
-	printf "%s" "${list}" # trim final new line char
+	printf "%s" "${list}"
 }

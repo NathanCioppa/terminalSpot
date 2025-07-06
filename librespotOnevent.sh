@@ -9,7 +9,6 @@ case "$PLAYER_EVENT" in
 		 echo "DURATION $DURATION_MS"
 		 echo "IMAGE_URL ${COVERS%%$'\n'*}"
 		 echo "SPOTIFY_URI $URI"
-		 echo "$URI" >> /home/nathan/uris
 		} > /tmp/librespotTrack ;;
 
 		"seeked" | "position_correction")
