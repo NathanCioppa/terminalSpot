@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestPut.sh"
+
+deviceId="$1"
+
+dataJson="{\"device_ids\":[\"$deviceId\"]}"
+requestPut "/me/player" "$dataJson"
