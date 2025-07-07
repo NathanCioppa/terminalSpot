@@ -6,8 +6,9 @@
 int main() {
 	initscr();
 	raw();
-	drawName();
 	refresh();
+	initWindows();
+	drawName();
 	getch();
 	endwin();
 	return 0;

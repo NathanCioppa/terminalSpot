@@ -8,6 +8,12 @@
 static WINDOW *headerWin, *libraryWin, *searchWin, *devicesWin;
 static int nameSize = 0;
 
+void initWindows() {
+	int headerHeight = 1;
+	headerWin = newwin(headerHeight, COLS,0,0);
+	//devicesWin = newwin(LINES - headerHeight, COLS, headerHeight,0);
+}
+
 int drawName() {
 	char *cmdArr[] = {"./scripts/getName", (char *)spotifyApiCmdDir, NULL};
 	char *command = formatCommandArr(cmdArr);
@@ -24,10 +30,18 @@ int drawName() {
 			return 0;
 
 		nameSize = strlen(buffer);
-		move(0,0);
-		printw("%s", buffer);
+		mvwprintw(headerWin,0,0,"%s",buffer);
+		wrefresh(headerWin);
 
 		return 1;
 	}
 	return 0;
+}
+
+int drawDeviceName() {
+	move(0,nameSize);
+	clrtoeol();
+	move(0,nameSize);
+
+	return 1;
 }
