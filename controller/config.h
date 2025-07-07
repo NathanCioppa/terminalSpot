@@ -1,1 +1,1 @@
-static const char spotifyApiCmdDir[] = "/home/nathan/Projects/terminalSpot/spotifyCommands";
+extern const char spotifyApiCmdDir[];

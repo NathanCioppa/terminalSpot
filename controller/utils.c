@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-char *readAllFromFile(FILE *fp);
-char *runCmd(char **command);
+#include "utils.h"
 
 char *readAllFromFile(FILE *fp) {
 	size_t bufferSize = 256;
