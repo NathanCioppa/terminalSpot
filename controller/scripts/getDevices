@@ -9,11 +9,9 @@ devicesJson="$("$spotifyApiCmdDir/getDevices")" || exit 1
 allDevices=""
 while read -r device; do
 	name="$(echo "$device" | jq -r ".name")"
-	deviceType="$(echo "$device" | jq -r '.type')"
-	isActive="$(echo "$device" | jq -r '.is_active')"
 	id="$(echo "$device" | jq -r '.id')"
 
-	deviceNewLineList="$(newLineList "$name" "$deviceType" "$isActive" "$id")"
+	deviceNewLineList="$(newLineList "$name" "$id")"
 	allDevices+="${deviceNewLineList}"$'\n'
 done < <(echo "$devicesJson" | jq -c '.devices[]')
 

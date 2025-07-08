@@ -6,9 +6,11 @@
 int main() {
 	initscr();
 	raw();
+	noecho();
 	refresh();
 	initWindows();
 	drawName();
+	drawDevicesWin();
 	getch();
 	endwin();
 	return 0;

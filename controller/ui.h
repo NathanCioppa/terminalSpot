@@ -2,3 +2,4 @@
 
 int drawName();
 int drawDeviceName();
+int drawDevicesWin();
