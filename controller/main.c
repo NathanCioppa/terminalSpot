@@ -11,7 +11,6 @@ int main() {
 	initWindows();
 	drawName();
 	drawDevicesWin();
-	getch();
 	endwin();
 	return 0;
 }

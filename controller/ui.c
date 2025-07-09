@@ -10,6 +10,7 @@ static WINDOW *headerWin, *libraryWin, *searchWin, *devicesWin;
 static int nameSize = 0;
 
 ITEM **makeDeviceArr(FILE *newLineList);
+void freeDeviceArr(ITEM **devices);
 
 void initWindows() {
 	int headerHeight = 1;
@@ -72,7 +73,9 @@ ITEM **makeDeviceArr(FILE *newLineList) {
 			nItems *= 2;
 			ITEM **newDevices = realloc(devices, nItems * sizeof(ITEM *));
 			if (newDevices == NULL) {
-				free(devices);
+				devices[deviceIdx] = NULL;
+				freeDeviceArr(devices);
+				free(line);
 				return NULL;
 			}
 			devices = newDevices;
@@ -84,12 +87,25 @@ ITEM **makeDeviceArr(FILE *newLineList) {
 			devices[deviceIdx] = new_item(deviceName, "");
 
 			char *deviceId = malloc(strlen(line)+1);
+			if (deviceId == NULL) {
+				devices[deviceIdx + 1] = NULL;
+				freeDeviceArr(devices);
+				free(deviceName); // would have been set in prior loop, but never assigned to a device
+				free(line);
+				return NULL;
+			}
 			strcpy(deviceId, line);
 			set_item_userptr(devices[deviceIdx], deviceId);
 			deviceIdx++;
 		} 
 		else {
 			deviceName = strdup(line);
+			if(deviceName == NULL) {
+				devices[deviceIdx + 1] = NULL;
+				freeDeviceArr(devices);
+				free(line);
+				return NULL;
+			}
 		}
 		nLine++;
 	}
@@ -98,9 +114,23 @@ ITEM **makeDeviceArr(FILE *newLineList) {
 	return devices;
 }
 
+void freeDeviceArr(ITEM **devices) {
+	unsigned int i = 0;
+	ITEM *device;
+	while((device = devices[i]) != NULL) {
+		free(item_userptr(device));
+		free((char *)item_name(device)); // name is originally passed by strdup(), nesecary to free
+		free_item(device);
+		i++;
+	}
+	free(devices);
+}
+
 int drawDevicesWin() {
 	char *cmdArr[] = {"./scripts/getDevices", (char *)spotifyApiCmdDir, NULL};
 	char *command = formatCommandArr(cmdArr);
+	if(command == NULL)
+		return 0;
 
 	FILE *fp = popen(command, "r");
 	free(command);
@@ -126,7 +156,8 @@ int drawDevicesWin() {
 
 	int ch;
 	ITEM *selection;
-	while ((ch = wgetch(devicesWin)) != 'q') {  // or some quit key
+	bool running = true;
+	while (running && (ch = wgetch(devicesWin))) {
     		switch(ch) {
         		case KEY_DOWN:
             			menu_driver(deviceMenu, REQ_DOWN_ITEM);
@@ -136,12 +167,23 @@ int drawDevicesWin() {
             			break;
         		case 10: // Enter key
 				selection = current_item(deviceMenu);
-            			printf("%s", (char *)item_userptr(selection));
+				char *cmdArr[] = {"./scripts/setDevice", (char *)spotifyApiCmdDir, item_userptr(selection), NULL};
+				char *command = formatCommandArr(cmdArr);
+				if(command) {
+					system(command);
+					free(command);
+				}
+            			
+				break;
+			case 'q': // quit application
+				running = false;
             		break;
     		}
     		wrefresh(devicesWin);
 	}
-
+	unpost_menu(deviceMenu);
+	free_menu(deviceMenu);
+	freeDeviceArr(devices);
 
 	return 1;	
 }

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+spotifyApiCmdDir="$1"
+deviceId="$2"
+
+"$spotifyApiCmdDir/setDevice" "$deviceId"
