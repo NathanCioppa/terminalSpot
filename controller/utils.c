@@ -1,6 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <libgen.h>
+#include <unistd.h>
+#include <string.h>
+#include "config.h"
 #include "utils.h"
+
+// Relevent files/commands are expected in certain places relevent to the location of the main executable.
+// Example: commands are expected in ./scripts/ where . is the location of the main executable. 
+
+// sourceDir is the absolute path to the directory containing the main executable.
+// scriptName is the name of a script located at sourceDir/scripts/scriptName.
+void getScriptPath(char *buffer, size_t bufferSize, char *sourceDir, char* scriptName) {
+	snprintf(buffer, bufferSize, "%s/scripts/%s", sourceDir, scriptName);
+}
+
+// Commands that do not return anything just be run directly from spotifyApiCmdDir.
+// Example: setting active spotify device (spotifyCommands/setDevice).
+void getDirectSpotifyCmdPath(char *buffer, size_t bufferSize, char *commandName) {
+	snprintf(buffer, bufferSize, "%s/%s", spotifyApiCmdDir, commandName);
+}
 
 char *readAllFromFile(FILE *fp) {
 	size_t bufferSize = 256;

@@ -2,9 +2,11 @@
 #include <string.h>
 #include <ncurses.h>
 #include <menu.h>
+#include <limits.h>
 #include "ui.h"
 #include "utils.h"
 #include "config.h"
+#include "spotifyCommands.h"
 
 static WINDOW *headerWin, *libraryWin, *searchWin, *devicesWin;
 static int nameSize = 0;
@@ -19,8 +21,10 @@ void initWindows() {
 	keypad(devicesWin, TRUE);
 }
 
-int drawName() {
-	char *cmdArr[] = {"./scripts/getName", (char *)spotifyApiCmdDir, NULL};
+int drawName(char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getName");
+	char *cmdArr[] = {cmdPath, (char *)spotifyApiCmdDir, NULL};
 	char *command = formatCommandArr(cmdArr);
 
 	FILE *fp = popen(command, "r");
@@ -84,7 +88,7 @@ ITEM **makeDeviceArr(FILE *newLineList) {
 		// Each device is 2 lines, first is name, second is id
 		// id is what is needed from the selection, required to change spoify connect device
 		if(nLine % 2 == 0) {
-			devices[deviceIdx] = new_item(deviceName, "");
+			devices[deviceIdx] = new_item(deviceName, "desc");
 
 			char *deviceId = malloc(strlen(line)+1);
 			if (deviceId == NULL) {
@@ -126,24 +130,15 @@ void freeDeviceArr(ITEM **devices) {
 	free(devices);
 }
 
-int drawDevicesWin() {
-	char *cmdArr[] = {"./scripts/getDevices", (char *)spotifyApiCmdDir, NULL};
-	char *command = formatCommandArr(cmdArr);
-	if(command == NULL)
-		return 0;
-
-	FILE *fp = popen(command, "r");
-	free(command);
-
-	if(fp == NULL)
+int drawDevicesWin(char *sourceDir) {
+	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
+	if(devicesNewLineList == NULL)
 		return 0;
 	
-	ITEM **devices = makeDeviceArr(fp);
-	if(devices == NULL) {
-		fclose(fp);
+	ITEM **devices = makeDeviceArr(devicesNewLineList);
+	fclose(devicesNewLineList);
+	if(devices == NULL)
 		return 0;
-	}
-	fclose(fp);
 
 	int height, width;
 	getmaxyx(devicesWin, height, width);
@@ -156,6 +151,7 @@ int drawDevicesWin() {
 
 	int ch;
 	ITEM *selection;
+	char *selectedDeviceId;
 	bool running = true;
 	while (running && (ch = wgetch(devicesWin))) {
     		switch(ch) {
@@ -167,13 +163,9 @@ int drawDevicesWin() {
             			break;
         		case 10: // Enter key
 				selection = current_item(deviceMenu);
-				char *cmdArr[] = {"./scripts/setDevice", (char *)spotifyApiCmdDir, item_userptr(selection), NULL};
-				char *command = formatCommandArr(cmdArr);
-				if(command) {
-					system(command);
-					free(command);
-				}
-            			
+				selectedDeviceId = item_userptr(selection);
+            			setActiveSpotifyDevice(selectedDeviceId);
+
 				break;
 			case 'q': // quit application
 				running = false;

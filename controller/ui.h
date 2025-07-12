@@ -1,5 +1,5 @@
 #include <ncurses.h>
 
-int drawName();
+int drawName(char *sourceDir);
 int drawDeviceName();
-int drawDevicesWin();
+int drawDevicesWin(char *sourceDir);
