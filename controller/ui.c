@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ncurses.h>
 #include <menu.h>
@@ -21,30 +22,15 @@ void initWindows() {
 	keypad(devicesWin, TRUE);
 }
 
-int drawName(char *sourceDir) {
-	char cmdPath[PATH_MAX];
-	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getName");
-	char *cmdArr[] = {cmdPath, (char *)spotifyApiCmdDir, NULL};
-	char *command = formatCommandArr(cmdArr);
+bool drawName(char *sourceDir) {
+	char name[31]; // maximum allowed display name by spotify is 30 characters, 31 allows space for terminating char.
+	if (!getName(name, sourceDir))
+		return false;
 
-	FILE *fp = popen(command, "r");
-	free(command);
-	char buffer[31]; // maximum allowed display name by spotify is 30 characters, 31 allows space for terminating char.
-
-	if (fp) {
-		char *result = fgets(buffer, sizeof(buffer), fp);
-		int status = pclose(fp);
-		// fgets fails, or the command exits abnormally, or exits with status 1; all indicate a failed execution.
-		if(result == NULL || !WIFEXITED(status) || WEXITSTATUS(status))
-			return 0;
-
-		nameSize = strlen(buffer);
-		mvwprintw(headerWin,0,0,"%s",buffer);
-		wrefresh(headerWin);
-
-		return 1;
-	}
-	return 0;
+	nameSize = strlen(name);
+	mvwprintw(headerWin, 0, 0, "%s", name);
+	wrefresh(headerWin);
+	return true;
 }
 
 int drawDeviceName() {

@@ -1,5 +1,6 @@
 #include <ncurses.h>
+#include <stdbool.h>
 
-int drawName(char *sourceDir);
+bool drawName(char *sourceDir);
 int drawDeviceName();
 int drawDevicesWin(char *sourceDir);
