@@ -3,4 +3,6 @@
 
 bool drawName(char *sourceDir);
 int drawDeviceName();
-int drawDevicesWin(char *sourceDir);
+bool drawDevicesWin(char *sourceDir);
+bool drawLibraryWin(char *sourceDir);
+

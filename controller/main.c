@@ -25,7 +25,8 @@ int main() {
 	refresh();
 	initWindows();
 	drawName(sourceDir);
-	drawDevicesWin(sourceDir);
+	//drawDevicesWin(sourceDir);
+	drawLibraryWin(sourceDir);
 	endwin();
 
 	return 0;
