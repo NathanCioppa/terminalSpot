@@ -28,10 +28,5 @@ int main() {
 	drawDevicesWin(sourceDir);
 	endwin();
 
-	char buf[PATH_MAX];
-
-	getDirectSpotifyCmdPath(buf, sizeof(buf), "cmd");
-	printf("%s", buf);
-
 	return 0;
 }

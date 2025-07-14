@@ -1,0 +1,11 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd  "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestGet.sh"
+
+endpoint="/me/playlists"
+limit="20"; [ -z "$1" ] || limit="$1"
+offset="0"; [ -z "$2" ] || offset="$2"
+
+
+requestGet "$endpoint?limit=$limit&offset=$offset"
+

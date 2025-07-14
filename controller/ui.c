@@ -16,9 +16,9 @@ ITEM **makeDeviceArr(FILE *newLineList);
 void freeDeviceArr(ITEM **devices);
 
 void initWindows() {
-	int headerHeight = 1;
-	headerWin = newwin(headerHeight, COLS,0,0);
-	devicesWin = newwin(LINES - headerHeight, COLS, headerHeight,0);
+	int headerHeight = 2;
+	headerWin = newwin(headerHeight, COLS, 0, 0);
+	devicesWin = newwin(LINES - headerHeight, COLS, headerHeight, 0);
 	keypad(devicesWin, TRUE);
 }
 

@@ -1,0 +1,9 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd  "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestGet.sh"
+
+endpoint="/me/following"
+limit="20"; [ -z "$1" ] || limit="$1"
+[ -z "$2" ] || after="&after=$2"
+
+requestGet "$endpoint?type=artist&limit=$limit$after"
