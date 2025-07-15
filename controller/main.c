@@ -3,9 +3,12 @@
 #include <unistd.h>
 #include <limits.h>
 #include <ncurses.h>
+
 #include "config.h"
 #include "utils.h"
 #include "ui.h"
+#include "libraryUi.h"
+#include "devicesUi.h"
 
 int main() {
 	char exePath[PATH_MAX];

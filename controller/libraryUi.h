@@ -1,0 +1,2 @@
+bool drawLibraryWin(char *sourceDir);
+
