@@ -13,10 +13,40 @@ static WINDOW *headerWin, *libraryWin, *searchWin, *devicesWin;
 static int nameSize = 0;
 static unsigned int libraryFilterMenuWidth = 0;
 
+
+struct Menu {
+	ITEM **items;
+	bool (*setItems)(struct Menu*, char*); // may need char* to sourceDir if executing commands.
+	void (*freeItems)(struct Menu*);
+};
+
+
+
 ITEM **makeDeviceArr(FILE *newLineList);
 void freeDeviceArr(ITEM **devices);
-size_t getMinMenuWidthNameOnly(ITEM **items, unsigned int menuMarkLen);
+size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen);
 void freeLibraryFilterItems(ITEM **filters);
+MENU *assembleMenu(ITEM **items, WINDOW *window, unsigned int row, unsigned int column, char *menuMark, bool minimize);
+bool devicesSetItems(struct Menu *self, char *sourceDir);
+void devicesFreeItems(struct Menu *self);
+
+
+bool devicesSetItems(struct Menu *self, char *sourceDir) {
+	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
+	if(devicesNewLineList == NULL)
+		return false;
+
+	self->items = makeDeviceArr(devicesNewLineList);
+	fclose(devicesNewLineList);
+	
+	return self->items != NULL;
+}
+
+void devicesFreeItems(struct Menu *self) {
+	freeDeviceArr(self->items);
+}
+
+
 
 void initWindows() {
 	int headerHeight = 2;
@@ -122,22 +152,20 @@ void freeDeviceArr(ITEM **devices) {
 }
 
 bool drawDevicesWin(char *sourceDir) {
-	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
-	if(devicesNewLineList == NULL)
-		return false;
+	//FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
+	//if(devicesNewLineList == NULL)
+	//	return false;
 	
-	ITEM **devices = makeDeviceArr(devicesNewLineList);
-	fclose(devicesNewLineList);
-	if(devices == NULL)
-		return false;
+	//ITEM **devices = makeDeviceArr(devicesNewLineList);
+	//fclose(devicesNewLineList);
+	//if(devices == NULL)
+	//	return false;
+	
+	ITEM **deviceItems;
+	struct Menu devices = {deviceItems, &devicesSetItems, &devicesFreeItems};
+	devices.setItems(&devices, sourceDir);
 
-	int height, width;
-	getmaxyx(devicesWin, height, width);
-
-	MENU *deviceMenu = new_menu(devices);
-	set_menu_win(deviceMenu, devicesWin);
-	set_menu_sub(deviceMenu, derwin(devicesWin, height, width, 0, 0));
-	post_menu(deviceMenu);
+	MENU *deviceMenu = assembleMenu(devices.items, devicesWin, 0, 0, "", false);
 	wrefresh(devicesWin);
 
 	int ch;
@@ -166,9 +194,32 @@ bool drawDevicesWin(char *sourceDir) {
 	}
 	unpost_menu(deviceMenu);
 	free_menu(deviceMenu);
-	freeDeviceArr(devices);
+	devices.freeItems(&devices);
 
 	return true;	
+}
+
+// Handles constructing a posting a menu of given items to a given window. Will not refresh window after posting. 
+// At time of writing, all menus for this application should span the entire window height available below row.
+// If minimize is false, menu will span full window width to the right of column.
+// row and column are relative to the windoe position, not the top left corner of the actual terminal. 
+MENU *assembleMenu(ITEM **items, WINDOW *window, unsigned int row, unsigned int column, char *menuMark, bool minimize) {
+	unsigned int height, width;
+	getmaxyx(window, height, width);
+	height -= row;
+	width -= column;
+	if(minimize) {
+		unsigned int minWidth = getMinMenuWidth(items, strlen(menuMark));
+		if (minWidth < width)
+			width = minWidth;
+	}
+
+	MENU *menu = new_menu(items);
+	set_menu_mark(menu, menuMark);
+	set_menu_win(menu, window);
+	set_menu_sub(menu, derwin(window, height, width, row, column));
+	post_menu(menu);
+	return menu;
 }
 
 bool drawLibraryWin(char *sourceDir) {
@@ -182,14 +233,8 @@ bool drawLibraryWin(char *sourceDir) {
 	filters[likedSongsIdx] = new_item("Liked Songs", "");
 	filters[filterSize] = NULL;
 
-	int height, width;
-	getmaxyx(libraryWin, height, width);
 
-	MENU *filterMenu = new_menu(filters);
-	set_menu_mark(filterMenu, "");
-	set_menu_win(filterMenu, libraryWin);
-	set_menu_sub(filterMenu, derwin(libraryWin, height, getMinMenuWidthNameOnly(filters, 0), 0, 0));
-	post_menu(filterMenu);
+	MENU *filterMenu = assembleMenu(filters, libraryWin, 0, 0, "", true);
 	wrefresh(libraryWin);
 
 	int ch;
@@ -221,6 +266,23 @@ bool drawLibraryWin(char *sourceDir) {
 	return true;
 }
 
+/*
+void handleFilterSelection(const unsigned int selectedIdx) {
+	if (selectedIdx == albumsIdx)
+		showAlbums();
+	else if (selectedIdx == artistsIdx)
+		showArtists();
+	else if (selectedIdx == playlistsIdx)
+		showPlaylists();
+	else if (selectedIdx == showsIdx)
+		showShows();
+	else if (selectedIdx == episodesIdx)
+		showEpisodes();
+	else if (selectedxIdx == likedSongsIdx)
+		showLikedSongs();
+}
+*/
+
 void freeLibraryFilterItems(ITEM **filters) {
 	unsigned int i = 0;
 	ITEM *thisFilter;
@@ -231,9 +293,10 @@ void freeLibraryFilterItems(ITEM **filters) {
 }
 
 // expects **items to be NULL terminated;
-size_t getMinMenuWidthNameOnly(ITEM **items, unsigned int menuMarkLen) {
-	unsigned int i = 0;
+size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen) {
+	size_t i = 0;
 	size_t longestNameLen = 0;
+	size_t longestDescLen = 0;
 
 	ITEM *thisItem;
 	while((thisItem = items[i]) != NULL) {
@@ -243,7 +306,19 @@ size_t getMinMenuWidthNameOnly(ITEM **items, unsigned int menuMarkLen) {
 			if(len > longestNameLen)
 				longestNameLen = len;
 		}
+
+		char *desc = (char *)item_description(thisItem);
+		if(desc != NULL) {
+			size_t len = strlen(desc);
+			if(len > longestDescLen)
+				longestDescLen = len;
+		}
+		
 		i++;
 	}
-	return longestNameLen + menuMarkLen;
+	size_t space = 0;
+	if(longestNameLen != 0 && longestDescLen != 0)
+		space = 1;
+
+	return longestNameLen + longestDescLen + menuMarkLen + space;
 }

@@ -2,7 +2,7 @@ const char spotifyApiCmdDir[] = "/home/nathan/Projects/terminalSpot/spotifyComma
 
 // Indicies of the filter menu on the library screen.
 // Change these to change the order.
-// Numbered 0-5, use each number exactly once. 
+// Numbered 0-5, use each number exactly once.
 const unsigned int playlistsIdx = 0;
 const unsigned int albumsIdx = 1;
 const unsigned int likedSongsIdx = 2;

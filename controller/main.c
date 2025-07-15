@@ -27,6 +27,7 @@ int main() {
 	drawName(sourceDir);
 	//drawDevicesWin(sourceDir);
 	drawLibraryWin(sourceDir);
+	
 	endwin();
 
 	return 0;
