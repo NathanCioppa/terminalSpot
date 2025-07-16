@@ -4,13 +4,12 @@
 #include <limits.h>
 #include <ncurses.h>
 
-#include "config.h"
-#include "utils.h"
 #include "ui.h"
 #include "libraryUi.h"
 #include "devicesUi.h"
 
 int main() {
+	printf("%s\n","0");
 	char exePath[PATH_MAX];
 	ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
 	if(len == -1)
@@ -22,15 +21,10 @@ int main() {
 	// sourceDir is the absolute path to the directory containing the main executable.
 	char *sourceDir = dirname(exePath);
 
-	initscr();
-	raw();
-	noecho();
-	refresh();
-	initWindows();
-	drawName(sourceDir);
-	//drawDevicesWin(sourceDir);
-	drawLibraryWin(sourceDir);
-	
+	initializeUi(sourceDir);
+	startUi(sourceDir);
+	uiLooper(sourceDir);
+
 	endwin();
 
 	return 0;

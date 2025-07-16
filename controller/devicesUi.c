@@ -5,12 +5,33 @@
 #include <string.h>
 
 #include "spotifyCommands.h"
+#include "devicesUi.h"
 #include "ui.h"
 
-ITEM **makeDeviceArr(FILE *newLineList);
+bool drawDevicesWin(char *sourceDir);
+void closeDevicesWin();
 void freeDeviceArr(ITEM **devices);
+void handleKeypress(int key, char *sourceDir);
+bool display(char *sourceDir);
+void close();
 bool devicesSetItems(struct Menu *self, char *sourceDir);
 void devicesFreeItems(struct Menu *self);
+ITEM **makeDeviceArr(FILE *newLineList);
+
+struct Menu _devices = {
+	.menu = NULL,
+	.items = NULL, 
+	.setItems = &devicesSetItems,
+	.freeItems = &devicesFreeItems
+};
+
+struct Menu *devices = &_devices;
+
+void initializeDevicesWin() {
+	devicesWin->display = &display;
+	devicesWin->close = &close;
+	devicesWin->handleKeypress = &handleKeypress;
+}
 
 bool devicesSetItems(struct Menu *self, char *sourceDir) {
 	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
@@ -25,6 +46,52 @@ bool devicesSetItems(struct Menu *self, char *sourceDir) {
 
 void devicesFreeItems(struct Menu *self) {
 	freeDeviceArr(self->items);
+}
+
+bool display(char *sourceDir) {
+	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
+	if(devicesNewLineList == NULL)
+		return false;
+
+	ITEM **items = makeDeviceArr(devicesNewLineList);
+	if(items == NULL)
+		return false;
+
+	devices->items = items;
+	devices->menu = assembleMenu(items, devicesWin->window, 0, 0, "", false);
+	if(devices->menu == NULL)
+		return false;
+
+	wrefresh(devicesWin->window);
+	return true;
+}
+
+void close() {
+	unpost_menu(devices->menu);
+	free_menu(devices->menu);
+	devices->freeItems(devices);
+	wrefresh(devicesWin->window);
+}
+
+void handleKeypress(int key, char *sourceDir) {
+	ITEM *selection;
+	char *deviceId;
+	switch(key) {
+		case KEY_DOWN:
+			menu_driver(devices->menu, REQ_DOWN_ITEM);
+			wrefresh(devicesWin->window);
+			break;
+		case KEY_UP:
+			menu_driver(devices->menu, REQ_UP_ITEM);
+			wrefresh(devicesWin->window);
+			break;
+		case 10:
+			selection = current_item(devices->menu);
+			deviceId = item_userptr(selection);
+            		setActiveSpotifyDevice(deviceId);
+			wrefresh(devicesWin->window);
+		break;
+	}
 }
 
 ITEM **makeDeviceArr(FILE *newLineList) {
@@ -102,6 +169,7 @@ void freeDeviceArr(ITEM **devices) {
 	free(devices);
 }
 
+/*
 bool drawDevicesWin(char *sourceDir) {
 	//FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
 	//if(devicesNewLineList == NULL)
@@ -113,17 +181,17 @@ bool drawDevicesWin(char *sourceDir) {
 	//	return false;
 	
 	ITEM **deviceItems;
-	struct Menu devices = {deviceItems, &devicesSetItems, &devicesFreeItems};
-	devices.setItems(&devices, sourceDir);
+	devices->items = deviceItems;
+	devices->setItems(devices, sourceDir);
 
-	MENU *deviceMenu = assembleMenu(devices.items, devicesWin, 0, 0, "", false);
-	wrefresh(devicesWin);
+	deviceMenu = assembleMenu(devices->items, devicesWin->window, 0, 0, "", false);
+	wrefresh(devicesWin->window);
 
 	int ch;
 	ITEM *selection;
 	char *selectedDeviceId;
 	bool running = true;
-	while (running && (ch = wgetch(devicesWin))) {
+	while (running && (ch = wgetch(devicesWin->window))) {
     		switch(ch) {
         		case KEY_DOWN:
             			menu_driver(deviceMenu, REQ_DOWN_ITEM);
@@ -137,15 +205,17 @@ bool drawDevicesWin(char *sourceDir) {
             			setActiveSpotifyDevice(selectedDeviceId);
 
 				break;
-			case 'q': // quit application
-				running = false;
+			default:
+				running = universalControls(ch, devicesWin, sourceDir);
             		break;
     		}
-    		wrefresh(devicesWin);
+    		wrefresh(devicesWin->window);
 	}
 	unpost_menu(deviceMenu);
 	free_menu(deviceMenu);
-	devices.freeItems(&devices);
+	devices->freeItems(devices);
 
 	return true;	
 }
+
+*/
