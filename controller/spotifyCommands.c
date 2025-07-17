@@ -6,7 +6,6 @@
 #include "utils.h"
 #include "config.h"
 
-
 #include "spotifyCommands.h"
 
 // Returns the availible devices as a new line seperated list, as formatted by ./scripts/getDevices.

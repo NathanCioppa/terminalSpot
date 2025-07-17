@@ -7,21 +7,21 @@
 #include "ui.h"
 
 static unsigned int libraryFilterMenuWidth = 0;
-void freeLibraryFilterItems(ITEM **filters);
+static void freeLibraryFilterItems(ITEM **filters);
 
 static bool display(char *sourceDir);
 static void close();
 static void handleKeypress(int key, char *sourceDir);
-bool filterSetItems(struct Menu *self, char *null);
-void filterFreeItems(struct Menu *self);
-struct Menu _filters = {
+static bool filterSetItems(struct Menu *self, char *null);
+static void filterFreeItems(struct Menu *self);
+
+static struct Menu _filters = {
 	.menu = NULL,
 	.items = NULL, 
 	.setItems = &filterSetItems,
 	.freeItems = &filterFreeItems,
 };
-
-struct Menu *filters = &_filters;
+static struct Menu *filters = &_filters;
 
 bool initializeLibraryWin(char *sourceDir) {
 	libraryWin->display = &display;
@@ -41,7 +41,7 @@ bool initializeLibraryWin(char *sourceDir) {
 	return true;
 }
 
-bool filterSetItems(struct Menu *self, char *null) {
+static bool filterSetItems(struct Menu *self, char *null) {
 	ITEM **filterItems = malloc(sizeof(ITEM *) * 7);
 	if(filterItems == NULL)
 		return false;
@@ -58,7 +58,7 @@ bool filterSetItems(struct Menu *self, char *null) {
 	return true;
 }
 
-void filterFreeItems(struct Menu *self) {
+static void filterFreeItems(struct Menu *self) {
 	freeLibraryFilterItems(self->items);
 	free(self->items);
 	self->items = NULL;
@@ -66,13 +66,11 @@ void filterFreeItems(struct Menu *self) {
 
 static bool display(char *sourceDir) {
 	post_menu(filters->menu);
-	wrefresh(libraryWin->window);
 	return true;
 }
 
 static void close() {
 	unpost_menu(filters->menu);
-	wrefresh(libraryWin->window);
 }
 
 static void handleKeypress(int key, char *sourceDir) {
@@ -90,49 +88,7 @@ static void handleKeypress(int key, char *sourceDir) {
 	}
 }
 
-
-/*
-bool drawLibraryWin(char *sourceDir) {
-	unsigned int filterSize = 6;
-	ITEM *filterItems[filterSize + 1];
-	struct Menu filters = {filterItems, &filterSetItems, &filterFreeItems};
-	filters.setItems(&filters, NULL);
-	filters.items[filterSize] = NULL;
-
-	MENU *filterMenu = assembleMenu(filters.items, libraryWin, 0, 0, "", true);
-	wrefresh(libraryWin);
-
-	int ch;
-	ITEM *selection;
-	unsigned int selectedIdx = 0;
-	bool running = true;
-	while(running && (ch = wgetch(libraryWin))) {
-		switch(ch) {
-			case KEY_DOWN:
-				menu_driver(filterMenu, REQ_DOWN_ITEM);
-				break;
-			case KEY_UP:
-				menu_driver(filterMenu, REQ_UP_ITEM);
-				break;
-			case 10:
-				selection = current_item(filterMenu);
-				selectedIdx = item_index(selection);
-				break;
-			case 'q':
-				running = false;
-			break;
-		}
-		wrefresh(libraryWin);
-	}
-	unpost_menu(filterMenu);
-	free_menu(filterMenu);
-	filters.freeItems(&filters);
-
-	return true;
-}
-*/
-
-void freeLibraryFilterItems(ITEM **filters) {
+static void freeLibraryFilterItems(ITEM **filters) {
 	unsigned int i = 0;
 	ITEM *thisFilter;
 	while((thisFilter = filters[i]) != NULL) {

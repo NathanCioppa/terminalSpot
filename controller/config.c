@@ -1,3 +1,4 @@
+
 const char spotifyApiCmdDir[] = "/home/nathan/Projects/terminalSpot/spotifyCommands";
 
 // Indicies of the filter menu on the library screen.
@@ -9,3 +10,4 @@ const unsigned int likedSongsIdx = 2;
 const unsigned int artistsIdx = 3;
 const unsigned int showsIdx = 4;
 const unsigned int episodesIdx = 5;
+

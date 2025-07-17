@@ -85,3 +85,4 @@ char *formatCommandArr(char **command) {
 		return NULL;
 	}
 }
+

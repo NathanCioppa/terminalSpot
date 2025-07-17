@@ -8,24 +8,22 @@
 #include "devicesUi.h"
 #include "ui.h"
 
-bool drawDevicesWin(char *sourceDir);
-void closeDevicesWin();
-void freeDeviceArr(ITEM **devices);
-void handleKeypress(int key, char *sourceDir);
-bool display(char *sourceDir);
-void close();
-bool devicesSetItems(struct Menu *self, char *sourceDir);
-void devicesFreeItems(struct Menu *self);
-ITEM **makeDeviceArr(FILE *newLineList);
+static void closeDevicesWin();
+static void freeDeviceArr(ITEM **devices);
+static void handleKeypress(int key, char *sourceDir);
+static bool display(char *sourceDir);
+static void close();
+static bool devicesSetItems(struct Menu *self, char *sourceDir);
+static void devicesFreeItems(struct Menu *self);
+static ITEM **makeDeviceArr(FILE *newLineList);
 
-struct Menu _devices = {
+static struct Menu _devices = {
 	.menu = NULL,
 	.items = NULL, 
 	.setItems = &devicesSetItems,
 	.freeItems = &devicesFreeItems
 };
-
-struct Menu *devices = &_devices;
+static struct Menu *devices = &_devices;
 
 void initializeDevicesWin() {
 	devicesWin->display = &display;
@@ -33,7 +31,7 @@ void initializeDevicesWin() {
 	devicesWin->handleKeypress = &handleKeypress;
 }
 
-bool devicesSetItems(struct Menu *self, char *sourceDir) {
+static bool devicesSetItems(struct Menu *self, char *sourceDir) {
 	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
 	if(devicesNewLineList == NULL)
 		return false;
@@ -44,36 +42,31 @@ bool devicesSetItems(struct Menu *self, char *sourceDir) {
 	return self->items != NULL;
 }
 
-void devicesFreeItems(struct Menu *self) {
+static void devicesFreeItems(struct Menu *self) {
 	freeDeviceArr(self->items);
 }
 
-bool display(char *sourceDir) {
-	FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
-	if(devicesNewLineList == NULL)
+static bool display(char *sourceDir) {
+	if(!devices->setItems(devices, sourceDir))
 		return false;
 
-	ITEM **items = makeDeviceArr(devicesNewLineList);
-	if(items == NULL)
+	devices->menu = assembleMenu(devices->items, devicesWin->window, 0, 0, "", false);
+	if(devices->menu == NULL) {
+		free_menu(devices->menu);
+		freeDeviceArr(devices->items);
 		return false;
+	}
 
-	devices->items = items;
-	devices->menu = assembleMenu(items, devicesWin->window, 0, 0, "", false);
-	if(devices->menu == NULL)
-		return false;
-
-	wrefresh(devicesWin->window);
 	return true;
 }
 
-void close() {
+static void close() {
 	unpost_menu(devices->menu);
 	free_menu(devices->menu);
 	devices->freeItems(devices);
-	wrefresh(devicesWin->window);
 }
 
-void handleKeypress(int key, char *sourceDir) {
+static void handleKeypress(int key, char *sourceDir) {
 	ITEM *selection;
 	char *deviceId;
 	switch(key) {
@@ -94,7 +87,7 @@ void handleKeypress(int key, char *sourceDir) {
 	}
 }
 
-ITEM **makeDeviceArr(FILE *newLineList) {
+static ITEM **makeDeviceArr(FILE *newLineList) {
 	size_t nItems = 5;
 	ITEM **devices = calloc(nItems, sizeof(ITEM *));
 	if (devices == NULL)
@@ -157,7 +150,7 @@ ITEM **makeDeviceArr(FILE *newLineList) {
 	return devices;
 }
 
-void freeDeviceArr(ITEM **devices) {
+static void freeDeviceArr(ITEM **devices) {
 	unsigned int i = 0;
 	ITEM *device;
 	while((device = devices[i]) != NULL) {
@@ -169,53 +162,3 @@ void freeDeviceArr(ITEM **devices) {
 	free(devices);
 }
 
-/*
-bool drawDevicesWin(char *sourceDir) {
-	//FILE *devicesNewLineList = getDevicesNewLineList(sourceDir);
-	//if(devicesNewLineList == NULL)
-	//	return false;
-	
-	//ITEM **devices = makeDeviceArr(devicesNewLineList);
-	//fclose(devicesNewLineList);
-	//if(devices == NULL)
-	//	return false;
-	
-	ITEM **deviceItems;
-	devices->items = deviceItems;
-	devices->setItems(devices, sourceDir);
-
-	deviceMenu = assembleMenu(devices->items, devicesWin->window, 0, 0, "", false);
-	wrefresh(devicesWin->window);
-
-	int ch;
-	ITEM *selection;
-	char *selectedDeviceId;
-	bool running = true;
-	while (running && (ch = wgetch(devicesWin->window))) {
-    		switch(ch) {
-        		case KEY_DOWN:
-            			menu_driver(deviceMenu, REQ_DOWN_ITEM);
-            			break;
-        		case KEY_UP:
-            			menu_driver(deviceMenu, REQ_UP_ITEM);
-            			break;
-        		case 10: // Enter key
-				selection = current_item(deviceMenu);
-				selectedDeviceId = item_userptr(selection);
-            			setActiveSpotifyDevice(selectedDeviceId);
-
-				break;
-			default:
-				running = universalControls(ch, devicesWin, sourceDir);
-            		break;
-    		}
-    		wrefresh(devicesWin->window);
-	}
-	unpost_menu(deviceMenu);
-	free_menu(deviceMenu);
-	devices->freeItems(devices);
-
-	return true;	
-}
-
-*/

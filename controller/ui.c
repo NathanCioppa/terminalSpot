@@ -12,8 +12,10 @@
 #include "devicesUi.h"
 #include "libraryUi.h"
 
-size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen);
-bool universalControl(char key, char *sourceDir);
+static bool drawName(char *sourceDir);
+static size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen);
+static bool universalControl(char key, char *sourceDir);
+static bool switchWindow(struct Window *nextWin, char *sourceDir);
 
 WINDOW *headerWINDOW;
 static int nameSize = 0;
@@ -22,39 +24,51 @@ struct Window *libraryWin = NULL;
 
 struct Window *currentWin = NULL;
 
-void initializeUi(char *sourceDir) {
+// Returns true if initialization is successful, and ncurses mode is entered.
+// On a false return, ncurses mode is ended.
+bool initializeUi(char *sourceDir) {
 	devicesWin = malloc(sizeof(struct Window));
 	libraryWin = malloc(sizeof(struct Window));
 
-	currentWin = malloc(sizeof(struct Window));
+	if(!(devicesWin && libraryWin))
+		return false;
 
 	initscr();
 	raw();
 	noecho();
 	refresh();
+
 	int headerHeight = 2;
 	headerWINDOW = newwin(headerHeight, COLS, 0, 0);
-	drawName(sourceDir);
-	wrefresh(headerWINDOW);
-
 	devicesWin->window = newwin(LINES - headerHeight, COLS, headerHeight, 0);
-	initializeDevicesWin();
-
 	libraryWin->window = newwin(LINES - headerHeight, COLS, headerHeight, 0);
-	initializeLibraryWin(sourceDir);
+
+	bool windowsAllocated = headerWINDOW && devicesWin->window && libraryWin->window;
+	if(windowsAllocated && drawName(sourceDir)) {
+		wrefresh(headerWINDOW);
+		initializeDevicesWin();
+		initializeLibraryWin(sourceDir);
+		
+		return true;
+	}
+
+	free(devicesWin);
+	free(libraryWin);
+	endwin();
+
+	return false;
 }
 
-void startUi(char *sourceDir) {
-	//initscr();
-	//raw();
-	//noecho();
-	//refresh();
-
-	libraryWin->display(sourceDir);
+bool startDefaultWindow(char *sourceDir) {
+	if(libraryWin->display(sourceDir)) {
+		currentWin = libraryWin;
+		wrefresh(currentWin->window);
+		return true;
+	}
+	return false;
 }
 
-void uiLooper(char *sourceDir) {
-	currentWin = libraryWin;
+void runUiLooper(char *sourceDir) {
 	keypad(currentWin->window, TRUE);
 	
 	int key;
@@ -67,22 +81,16 @@ void uiLooper(char *sourceDir) {
 
 }
 
-bool universalControl(char key, char *sourceDir) {
+static bool universalControl(char key, char *sourceDir) {
 	switch(key) {
 		case 'd':
-			currentWin->close();
-			keypad(currentWin->window, FALSE);
-			currentWin = devicesWin;
-			currentWin->display(sourceDir);
-			keypad(currentWin->window, TRUE);
+			if(currentWin != devicesWin)
+				switchWindow(devicesWin, sourceDir);
 			return true;
 			break;
 		case 'l':
-			currentWin->close();
-			keypad(currentWin->window, FALSE);
-			currentWin = libraryWin;
-			currentWin->display(sourceDir);
-			keypad(currentWin->window, TRUE);
+			if(currentWin != libraryWin)
+				switchWindow(libraryWin, sourceDir);
 			return true;
 			break;
 		case 'q':
@@ -93,7 +101,22 @@ bool universalControl(char key, char *sourceDir) {
 	return false;
 }
 
-bool drawName(char *sourceDir) {
+static bool switchWindow(struct Window *nextWin, char *sourceDir) {
+	if (!nextWin->display(sourceDir))
+		return false;
+
+	keypad(currentWin->window, FALSE);
+	currentWin->close();
+
+	keypad(nextWin->window, TRUE);
+	wrefresh(currentWin->window);
+	wrefresh(nextWin->window);
+
+	currentWin = nextWin;
+	return true;
+}
+
+static bool drawName(char *sourceDir) {
 	char name[31]; // maximum allowed display name by spotify is 30 characters, 31 allows space for terminating char.
 	if (!getName(name, sourceDir))
 		return false;
@@ -131,8 +154,9 @@ MENU *assembleMenu(ITEM **items, WINDOW *window, unsigned int row, unsigned int 
 	return menu;
 }
 
-// expects **items to be NULL terminated;
-size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen) {
+// Expects **items to be NULL terminated.
+// Used by assembleMenu().
+static size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen) {
 	size_t i = 0;
 	size_t longestNameLen = 0;
 	size_t longestDescLen = 0;

@@ -9,7 +9,6 @@
 #include "devicesUi.h"
 
 int main() {
-	printf("%s\n","0");
 	char exePath[PATH_MAX];
 	ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
 	if(len == -1)
@@ -22,10 +21,10 @@ int main() {
 	char *sourceDir = dirname(exePath);
 
 	initializeUi(sourceDir);
-	startUi(sourceDir);
-	uiLooper(sourceDir);
+	startDefaultWindow(sourceDir);
+	runUiLooper(sourceDir);
 
 	endwin();
-
 	return 0;
 }
+

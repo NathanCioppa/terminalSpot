@@ -4,4 +4,4 @@ void getScriptPath(char *buffer, size_t bufferSize, char *sourceDir, char *scrip
 void getDirectSpotifyCmdPath(char *buffer, size_t bufferSize, char *commandName);
 char *readAllFromFile(FILE *fp);
 char *formatCommandArr(char **command);
-void initWindows();
+

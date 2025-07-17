@@ -24,8 +24,8 @@ struct Window {
 
 extern struct Window *currentWin, *libraryWin, *searchWin, *devicesWin;
 
-bool drawName(char *sourceDir);
 MENU *assembleMenu(ITEM **items, WINDOW *window, unsigned int row, unsigned int column, char *menuMark, bool minimize);
-void initializeUi(char *sourceDir);
-void startUi(char *sourceDir);
-void uiLooper(char *sourceDir);
+bool initializeUi(char *sourceDir);
+bool startDefaultWindow(char *sourceDir);
+void runUiLooper(char *sourceDir);
+
