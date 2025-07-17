@@ -15,13 +15,15 @@ static bool display(char *sourceDir);
 static void close();
 static bool devicesSetItems(struct Menu *self, char *sourceDir);
 static void devicesFreeItems(struct Menu *self);
+static bool devicesHandleSelect(struct Menu *self, int key, char *sourceDir); 
 static ITEM **makeDeviceArr(FILE *newLineList);
 
 static struct Menu _devices = {
 	.menu = NULL,
 	.items = NULL, 
 	.setItems = &devicesSetItems,
-	.freeItems = &devicesFreeItems
+	.freeItems = &devicesFreeItems,
+	.handleSelect = &devicesHandleSelect
 };
 static struct Menu *devices = &_devices;
 
@@ -44,6 +46,15 @@ static bool devicesSetItems(struct Menu *self, char *sourceDir) {
 
 static void devicesFreeItems(struct Menu *self) {
 	freeDeviceArr(self->items);
+}
+
+static bool devicesHandleSelect(struct Menu *self, int key, char *sourceDir) {
+	ITEM *selection = current_item(self->menu);
+	char *deviceId = item_userptr(selection);
+        if(setActiveSpotifyDevice(deviceId))
+		return true;
+
+	return false;
 }
 
 static bool display(char *sourceDir) {
@@ -79,10 +90,7 @@ static void handleKeypress(int key, char *sourceDir) {
 			wrefresh(devicesWin->window);
 			break;
 		case 10:
-			selection = current_item(devices->menu);
-			deviceId = item_userptr(selection);
-            		setActiveSpotifyDevice(deviceId);
-			wrefresh(devicesWin->window);
+			devices->handleSelect(devices, key, sourceDir);
 		break;
 	}
 }

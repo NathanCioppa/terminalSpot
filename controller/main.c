@@ -25,6 +25,7 @@ int main() {
 	runUiLooper(sourceDir);
 
 	endwin();
+
 	return 0;
 }
 

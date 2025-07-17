@@ -9,6 +9,7 @@ struct Menu {
 	ITEM **items;
 	bool (*setItems)(struct Menu *self, char *sourceDir); // may need char* to sourceDir if executing commands.
 	void (*freeItems)(struct Menu *self);
+	bool (*handleSelect)(struct Menu *self, int key, char *sourceDir);
 };
 #endif
 

@@ -11,3 +11,6 @@ const unsigned int artistsIdx = 3;
 const unsigned int showsIdx = 4;
 const unsigned int episodesIdx = 5;
 
+// The index of the library filter to default to, range same as above.
+const unsigned int defaultIdx = 0;
+
