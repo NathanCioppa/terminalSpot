@@ -6,8 +6,10 @@
 #include "config.h"
 #include "ui.h"
 
+static const size_t filterSize = 6;
 static unsigned int libraryFilterMenuWidth = 0;
 static void freeLibraryFilterItems(ITEM **filters);
+static struct Menu **filterMenusOrdered; 
 
 static bool display(char *sourceDir);
 static void close();
@@ -101,18 +103,16 @@ static struct Menu *content;
 static struct Menu *activeMenu;
 
 bool initializeLibraryWin(char *sourceDir) {
-	if(albumsIdx == defaultIdx)
-		content = albums;
-	else if (artistsIdx == defaultIdx)
-		content = artists;
-	else if (playlistsIdx == defaultIdx)
-		content = playlists;
-	else if (showsIdx == defaultIdx)
-		content = playlists;
-	else if (episodesIdx == defaultIdx)
-		content = episodes;
-	else if (episodesIdx == defaultIdx)
-		content = likedSongs;
+	filterMenusOrdered = malloc(sizeof(struct Menu *) * (filterSize + 1));
+	filterMenusOrdered[albumsIdx] = albums;
+	filterMenusOrdered[artistsIdx] = artists;
+	filterMenusOrdered[playlistsIdx] = playlists;
+	filterMenusOrdered[showsIdx] = shows;
+	filterMenusOrdered[episodesIdx] = episodes;
+	filterMenusOrdered[likedSongsIdx] = likedSongs;
+
+	if(defaultIdx < filterSize)
+		content = filterMenusOrdered[defaultIdx];
 	else
 		return false;
 
@@ -139,30 +139,42 @@ bool initializeLibraryWin(char *sourceDir) {
 		return false;
 	}
 
-	playlists->menu = contentMENU;
-	albums->menu = contentMENU;
-	artists->menu = contentMENU;
-	shows->menu = contentMENU;
-	episodes->menu = contentMENU;
-	likedSongs->menu = contentMENU;
-	
+	for(size_t i = 0; i < filterSize; i++) {
+		filterMenusOrdered[i]->menu = contentMENU;
+	}
+
 	return true;
 }
 
 static bool filterSetItems(struct Menu *self, char *null) {
-	ITEM **filterItems = malloc(sizeof(ITEM *) * 7);
+	ITEM **filterItems = malloc(sizeof(ITEM *) * (filterSize + 1));
 	if(filterItems == NULL)
 		return false;
+
+	filterItems[albumsIdx] = new_item("Albums","");
+	filterItems[artistsIdx] = new_item("Artists", "");
+	filterItems[playlistsIdx] = new_item("Playlists","");
+	filterItems[showsIdx] = new_item("Shows", "");
+	filterItems[episodesIdx] = new_item("Episodes", "");
+	filterItems[likedSongsIdx] = new_item("Liked Songs", "");
+
+	filterItems[filterSize] = NULL;
+
+	bool allocFailed = false;
+	for(unsigned int i = 0; i < filterSize; i++) {
+		if(filterItems[i] == NULL)
+			allocFailed = true;
+		break;
+	}
+	if(allocFailed) {
+		for(unsigned int i = 0; i < filterSize; i++) {
+			if(filterItems[i] != NULL)
+				free_item(filterItems[i]);
+		}
+		return false;
+	}
+
 	self->items = filterItems;
-
-	self->items[albumsIdx] = new_item("Albums","");
-	self->items[artistsIdx] = new_item("Artists", "");
-	self->items[playlistsIdx] = new_item("Playlists","");
-	self->items[showsIdx] = new_item("Shows", "");
-	self->items[episodesIdx] = new_item("Episodes", "");
-	self->items[likedSongsIdx] = new_item("Liked Songs", "");
-
-	self->items[6] = NULL;
 	return true;
 }
 
@@ -173,6 +185,12 @@ static void filterFreeItems(struct Menu *self) {
 }
 
 static bool filterHandleSelect(struct Menu *self, int key, char *sourceDir) {
+	if(key != 10)
+		return false;
+
+	size_t selectedIdx = item_index(current_item(self->menu));
+	content = filterMenusOrdered[selectedIdx];
+
 	return true;
 }
 
@@ -272,7 +290,9 @@ static void handleKeypress(int key, char *sourceDir) {
 			activeMenu = content;
 			break;
 		case 10:
-			activeMenu->handleSelect(activeMenu, key, sourceDir);
+			// all handleSelect functions should return true if the content menu should be focused.
+			if(activeMenu->handleSelect(activeMenu, key, sourceDir))
+				activeMenu = content;
 			break;
 		break;
 	}
