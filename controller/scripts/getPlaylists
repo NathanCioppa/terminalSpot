@@ -3,13 +3,13 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/newLineList.sh"
 
-spotifyApiCmdDir="$1"
-limit="$2"
-offset="$3"
+spotifyApiCmdDir="$3"
+limit="$1"
+offset="$2"
 
 playlistsJson="$("$spotifyApiCmdDir/getUserPlaylists")" || exit 1
 
-allPlaylists=""
+allPlaylists="$(echo "$playlistsJson" | jq -r ".total")"$'\n'
 while read -r playlist; do
 	name="$(echo "$playlist" | jq -r ".name")"
 	artist="$(echo "$playlist" | jq -r ".owner.display_name")"

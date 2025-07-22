@@ -2,9 +2,11 @@
 #include <stdbool.h>
 #include <ncurses.h>
 #include <menu.h>
+#include <string.h>
 
 #include "config.h"
 #include "ui.h"
+#include "spotifyCommands.h"
 
 static const size_t filterSize = 6;
 static unsigned int libraryFilterMenuWidth = 0;
@@ -35,6 +37,9 @@ static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir);
 static bool albumsSetItems(struct Menu *self, char *sourceDir);
 static void albumsFreeItems(struct Menu *self);
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir);
+
+static ITEM **makeAllocatedItemArr(FILE *newLineList, size_t initSize);
+static void freeAllocatedItemArr(ITEM **items); 
 
 static struct Menu _filters = {
 	.menu = NULL,
@@ -132,7 +137,13 @@ bool initializeLibraryWin(char *sourceDir) {
 	filters->menu = filterMENU;
 	activeMenu = filters;
 	
-	MENU *contentMENU = assembleMenu(content->items, libraryWin->window, 0, 0, "", false);
+	for(size_t i = 0; i < filterSize; i++) {
+		filterMenusOrdered[i]->setItems(filterMenusOrdered[i], sourceDir);
+	}
+
+	printf("%s", item_name(playlists->items[0]));
+
+	MENU *contentMENU = assembleMenu(content->items, libraryWin->window, 0, 12, "", false);
 	if(contentMENU == NULL) {
 		filters->freeItems(filters);
 		free_menu(filterMENU);
@@ -142,6 +153,8 @@ bool initializeLibraryWin(char *sourceDir) {
 	for(size_t i = 0; i < filterSize; i++) {
 		filterMenusOrdered[i]->menu = contentMENU;
 	}
+
+
 
 	return true;
 }
@@ -190,11 +203,24 @@ static bool filterHandleSelect(struct Menu *self, int key, char *sourceDir) {
 
 	size_t selectedIdx = item_index(current_item(self->menu));
 	content = filterMenusOrdered[selectedIdx];
+	unpost_menu(content->menu);
+	set_menu_items(content->menu, content->items);
+	post_menu(content->menu);
+	wrefresh(libraryWin->window);
 
 	return true;
 }
 
 static bool playlistsSetItems(struct Menu *self, char *sourceDir) {
+	int limit = 50;
+	int offset = 0;
+	int page = 1;
+	FILE *playlistsNewLineList = getPlaylistsNewLineList(sourceDir, limit, offset);
+
+	self->items = makeAllocatedItemArr(playlistsNewLineList, 30);
+	if(self->items == NULL)
+		return false;
+
 	return true;
 }
 
@@ -203,7 +229,11 @@ static void playlistsFreeItems(struct Menu *self) {
 }
 
 static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
-	return true;
+	if(key == 10) {
+		
+
+	}
+	return false;
 }
 
 static bool artistsSetItems(struct Menu *self, char *sourceDir) {
@@ -307,4 +337,89 @@ static void freeLibraryFilterItems(ITEM **filters) {
 	}
 }
 
+// Every ITEM ** returned from this function will have its name, description, and pointer malloced.
+// Every ITEM ** returned should be freed by freeAllocatedItemArr(). 
+static ITEM **makeAllocatedItemArr(FILE *newLineList, size_t initSize) {
+	size_t nItems = initSize;
+	ITEM **items = calloc(nItems, sizeof(ITEM *));
+	if (items == NULL)
+		return NULL;
+	
+	unsigned int nLine = 1;
+	unsigned int itemIdx = 0;
+	char *itemName;
+	char *itemDesc;
+	char *line = NULL;
+	size_t len = 0;
+
+	int i = 0;
+	bool firstLine = true;
+	while(getline(&line, &len, newLineList) != -1) {
+		if(firstLine) {
+			firstLine = false;
+			continue;
+		}
+
+		// remove trailing new line char
+		line[strcspn(line, "\n")] = '\0';
+
+		// make sure there is space for another item & NULL
+		if (itemIdx+1 >= nItems) {
+			nItems *= 2;
+			ITEM **newItems = realloc(items, nItems * sizeof(ITEM *));
+			if (newItems == NULL) {
+				items[itemIdx] = NULL;
+				freeAllocatedItemArr(items);
+				free(line);
+				return NULL;
+			}
+			items = newItems;
+		}
+		
+		// Each item is 3 lines, first is name, second is description, third is user pointer.
+		if(nLine % 3 == 0) {
+			items[itemIdx] = new_item(itemName, itemDesc);
+
+			char *itemUserPtr = malloc(strlen(line)+1);
+			if (itemUserPtr == NULL) {
+				items[itemIdx + 1] = NULL;
+				freeAllocatedItemArr(items);
+				free(itemName);
+				free(itemDesc);
+				free(line);
+				return NULL;
+			}
+			strcpy(itemUserPtr, line);
+			set_item_userptr(items[itemIdx], itemUserPtr);
+			itemIdx++;
+		} 
+		else if (nLine % 3 == 2) {
+			itemDesc = strdup(line);
+			if(itemDesc == NULL) {
+				items[itemIdx + 1] = NULL;
+				freeAllocatedItemArr(items);
+				free(itemName);
+				free(line);
+				return NULL;
+			}
+		}
+		else {
+			itemName = strdup(line);
+			if(itemName == NULL) {
+				items[itemIdx+1] = NULL;
+				freeAllocatedItemArr(items);
+				free(line);
+				return NULL;
+			}
+		}
+		nLine++;
+	}
+	free(line);
+	items[itemIdx] = NULL;
+	return items;
+}
+
+static void freeAllocatedItemArr(ITEM **items) {
+
+}
 
