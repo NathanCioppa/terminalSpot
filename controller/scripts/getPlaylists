@@ -7,7 +7,7 @@ spotifyApiCmdDir="$3"
 limit="$1"
 offset="$2"
 
-playlistsJson="$("$spotifyApiCmdDir/getUserPlaylists")" || exit 1
+playlistsJson="$("$spotifyApiCmdDir/getUserPlaylists" "$limit" "$offset")" || exit 1
 
 allPlaylists="$(echo "$playlistsJson" | jq -r ".total")"$'\n'
 while read -r playlist; do
