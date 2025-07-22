@@ -1,0 +1,14 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestPut.sh"
+
+contextUri="$1"
+offset="$2"
+
+[ -z "$offset" ] || offsetBlock=",\"offset\":{\"position\":\""$offset"\"}" 
+
+data="{\"context_uri\":\""$contextUri"\""$offsetBlock"}"
+
+requestPut "/me/player/play" "$data"
+

@@ -68,3 +68,13 @@ FILE *getPlaylistsNewLineList(char *sourceDir, int limit, int offset) {
 	return popen(cmd, "r");
 }
 
+int playContext(char *contextUri) {
+	char cmdPath[PATH_MAX];
+	getDirectSpotifyCmdPath(cmdPath, sizeof(cmdPath), "playContext");
+
+	char cmd[strlen(cmdPath) + strlen(contextUri) + 2];
+	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, contextUri);
+
+	return system(cmd);
+}
+

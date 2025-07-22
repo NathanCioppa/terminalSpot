@@ -223,8 +223,7 @@ static void playlistsFreeItems(struct Menu *self) {
 
 static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	if(key == 10) {
-			
-
+		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
 	}
 	return false;
 }
