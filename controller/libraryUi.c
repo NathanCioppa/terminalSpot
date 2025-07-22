@@ -138,10 +138,9 @@ bool initializeLibraryWin(char *sourceDir) {
 	activeMenu = filters;
 	
 	for(size_t i = 0; i < filterSize; i++) {
-		filterMenusOrdered[i]->setItems(filterMenusOrdered[i], sourceDir);
+		if(!filterMenusOrdered[i]->setItems(filterMenusOrdered[i], sourceDir))
+			return false;
 	}
-
-	printf("%s", item_name(playlists->items[0]));
 
 	MENU *contentMENU = assembleMenu(content->items, libraryWin->window, 0, 12, "", false);
 	if(contentMENU == NULL) {
@@ -153,8 +152,6 @@ bool initializeLibraryWin(char *sourceDir) {
 	for(size_t i = 0; i < filterSize; i++) {
 		filterMenusOrdered[i]->menu = contentMENU;
 	}
-
-
 
 	return true;
 }
@@ -217,7 +214,7 @@ static bool playlistsSetItems(struct Menu *self, char *sourceDir) {
 	int page = 1;
 	FILE *playlistsNewLineList = getPlaylistsNewLineList(sourceDir, limit, offset);
 
-	self->items = makeAllocatedItemArr(playlistsNewLineList, 30);
+	self->items = makeAllocatedItemArr(playlistsNewLineList, 13);
 	if(self->items == NULL)
 		return false;
 
@@ -230,7 +227,7 @@ static void playlistsFreeItems(struct Menu *self) {
 
 static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	if(key == 10) {
-		
+			
 
 	}
 	return false;

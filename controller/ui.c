@@ -132,7 +132,7 @@ static bool drawName(char *sourceDir) {
 // If minimize is false, menu will span full window width to the right of column.
 // row and column are relative to the window position, not the top left corner of the actual terminal. 
 MENU *assembleMenu(ITEM **items, WINDOW *window, unsigned int row, unsigned int column, char *menuMark, bool minimize) {
-	unsigned int height, width;
+	int height, width;
 	getmaxyx(window, height, width);
 	height -= row;
 	width -= column;
@@ -146,11 +146,13 @@ MENU *assembleMenu(ITEM **items, WINDOW *window, unsigned int row, unsigned int 
 	MENU *menu = new_menu(items);
 	if(menu == NULL)
 		return NULL;
-
+	
 	set_menu_mark(menu, menuMark);
 	set_menu_win(menu, window);
 	set_menu_sub(menu, derwin(window, height, width, row, column));
+	set_menu_format(menu, height, 1);
 	post_menu(menu);
+
 	return menu;
 }
 
