@@ -218,7 +218,7 @@ static bool playlistsSetItems(struct Menu *self, char *sourceDir) {
 }
 
 static void playlistsFreeItems(struct Menu *self) {
-	
+	freeAllocatedItemArr(self->items);	
 }
 
 static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
@@ -290,11 +290,13 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 
 static bool display(char *sourceDir) {
 	post_menu(filters->menu);
+	post_menu(content->menu);
 	return true;
 }
 
 static void close() {
 	unpost_menu(filters->menu);
+	unpost_menu(content->menu);
 }
 
 static void handleKeypress(int key, char *sourceDir) {
@@ -502,6 +504,15 @@ static ITEM **makeAllocatedItemArr(FILE *newLineList, size_t initSize) {
 }
 
 static void freeAllocatedItemArr(ITEM **items) {
-
+	size_t i = 0;
+	ITEM *thisItem;
+	while((thisItem = items[i]) != NULL) {
+		free((char *)item_name(thisItem));
+		free((char *)item_description(thisItem));
+		free(item_userptr(thisItem));
+		free_item(thisItem);
+		i++;
+	}
+	free(items);
 }
 
