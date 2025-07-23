@@ -3,12 +3,14 @@
 #include <unistd.h>
 #include <limits.h>
 #include <ncurses.h>
+#include <locale.h>
 
 #include "ui.h"
 #include "libraryUi.h"
 #include "devicesUi.h"
 
 int main() {
+	setlocale(LC_ALL, "");
 	char exePath[PATH_MAX];
 	ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
 	if(len == -1)

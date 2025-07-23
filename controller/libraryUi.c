@@ -3,7 +3,6 @@
 #include <ncurses.h>
 #include <menu.h>
 #include <string.h>
-
 #include "config.h"
 #include "ui.h"
 #include "spotifyCommands.h"
@@ -277,7 +276,12 @@ static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir) 
 }
 
 static bool albumsSetItems(struct Menu *self, char *sourceDir) {
-	return true;
+	self->items = allocStaticLibraryItems(sourceDir, &getAlbumsNewLineList);
+	if(self->items) {
+		return true;
+	}
+
+	return false;
 }
 
 static void albumsFreeItems(struct Menu *self) {
@@ -285,7 +289,10 @@ static void albumsFreeItems(struct Menu *self) {
 }
 
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
-	return true;
+	if(key == 10) {
+		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
+	}
+	return false;
 }
 
 static bool display(char *sourceDir) {
@@ -377,6 +384,11 @@ static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int
 			continue;
 		}
 		line[strcspn(line, "\n")] = '\0';
+		// temporary fix for wide (japanese, ect.) characters breaking menu loading
+		// lets be real this is probably permenent lol
+		for (char *p = line; *p; ++p) {
+    			if ((unsigned char)*p >= 128) *p = '?';
+		}
 		if(isCountLine) {
 			isCountLine = false;
 			continue;

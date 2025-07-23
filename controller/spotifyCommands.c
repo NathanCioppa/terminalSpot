@@ -68,6 +68,18 @@ FILE *getPlaylistsNewLineList(char *sourceDir, int limit, int offset) {
 	return popen(cmd, "r");
 }
 
+FILE *getAlbumsNewLineList(char *sourceDir, int limit, int offset) {
+	char cmdPath[PATH_MAX];
+	char commandCall[32];
+	snprintf(commandCall, sizeof(commandCall), "getAlbums %d %d", limit, offset);
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, commandCall);
+
+	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 2];
+	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}
+
 int playContext(char *contextUri) {
 	char cmdPath[PATH_MAX];
 	getDirectSpotifyCmdPath(cmdPath, sizeof(cmdPath), "playContext");
