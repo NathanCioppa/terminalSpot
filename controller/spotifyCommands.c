@@ -80,6 +80,40 @@ FILE *getAlbumsNewLineList(char *sourceDir, int limit, int offset) {
 	return popen(cmd, "r");
 }
 
+FILE *getShowsNewLineList(char *sourceDir, int limit, int offset) {
+	char cmdPath[PATH_MAX];
+	char commandCall[32];
+	snprintf(commandCall, sizeof(commandCall), "getShows %d %d", limit, offset);
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, commandCall);
+
+	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 2];
+	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}
+
+FILE *getEpisodesNewLineList(char *sourceDir, int limit, int offset) {
+	char cmdPath[PATH_MAX];
+	char commandCall[32];
+	snprintf(commandCall, sizeof(commandCall), "getEpisodes %d %d", limit, offset);
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, commandCall);
+
+	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 2];
+	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}
+
+FILE *getArtistsNewLineList(char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getUserFollowedArtists");
+	
+	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 2];
+	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, spotifyApiCmdDir);
+
+	return popen(cmd, "r");	
+}
+
 int playContext(char *contextUri) {
 	char cmdPath[PATH_MAX];
 	getDirectSpotifyCmdPath(cmdPath, sizeof(cmdPath), "playContext");

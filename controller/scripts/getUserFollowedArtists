@@ -1,0 +1,31 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/newLineList.sh"
+
+spotifyApiCmdDir="$1"
+limit=50
+artistsJson="$("$spotifyApiCmdDir/getUserFollowedArtists" "$limit")" || exit 1
+next="$(echo "$artistsJson" | jq -r '.artists.cursors.after')"
+
+allArtists="$(echo "$artistsJson" | jq -r '.artists.total')"$'\n'
+
+function getArtistsFromPage() {
+	while read -r artist; do
+		name="$(echo "$artist" | jq -r ".name")"
+		uri="$(echo "$artist" | jq -r ".uri")"
+
+		artistNewLineList="$(newLineList "$name" "$uri")"
+		allArtists+="${artistNewLineList}"$'\n'
+	done < <(echo "$artistsJson" | jq -c '.artists.items[]')
+}
+
+getArtistsFromPage
+
+while [ "$next" != "null" ]; do
+	artistsJson="$("$spotifyApiCmdDir/getUserFollowedArtists" "$limit" "$next")" || exit 1
+	next="$(echo "$artistsJson" | jq -r '.artists.cursors.after')"
+	getArtistsFromPage
+done
+
+printf "%s" "$allArtists"

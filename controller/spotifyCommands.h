@@ -7,5 +7,6 @@ bool getName(char *nameBuffer, char *sourceDir);
 FILE *getPlaylistsNewLineList(char *sourceDir, int limit, int offset);
 int playContext(char *contextUri);
 FILE *getAlbumsNewLineList(char *sourceDir, int limit, int offset); 
-
-
+FILE *getShowsNewLineList(char *sourceDir, int limit, int offset); 
+FILE *getEpisodesNewLineList(char *sourceDir, int limit, int offset); 
+FILE *getArtistsNewLineList(char *sourceDir);

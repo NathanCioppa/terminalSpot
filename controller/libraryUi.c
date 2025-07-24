@@ -37,9 +37,9 @@ static bool albumsSetItems(struct Menu *self, char *sourceDir);
 static void albumsFreeItems(struct Menu *self);
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir);
 
-static ITEM **makeAllocatedItemArr(FILE *newLineList, size_t initSize);
 static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int, int)); 
 static void freeAllocatedItemArr(ITEM **items); 
+static ITEM **makeArtistItems(FILE *artistsNewLineList);
 
 static struct Menu _filters = {
 	.menu = NULL,
@@ -228,7 +228,15 @@ static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 }
 
 static bool artistsSetItems(struct Menu *self, char *sourceDir) {
-	return true;
+	FILE *artistsNewLineList = getArtistsNewLineList(sourceDir);
+	if(!artistsNewLineList)
+		return false;
+
+	self->items = makeArtistItems(artistsNewLineList);
+	if(self->items)
+		return true;
+
+	return false;
 }
 
 static void artistsFreeItems(struct Menu *self) {
@@ -236,15 +244,22 @@ static void artistsFreeItems(struct Menu *self) {
 }
 
 static bool artistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
-	return true;
+	if(key == 10) {
+		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
+	}
+	return false;
 }
 
 static bool episodesSetItems(struct Menu *self, char *sourceDir) {
-	return true;
+	self->items = allocStaticLibraryItems(sourceDir, &getEpisodesNewLineList);
+	if(self->items)
+		return true;
+
+	return false;
 }
 
 static void episodesFreeItems(struct Menu *self) {
-
+	freeAllocatedItemArr(self->items);	
 }
 
 static bool episodesHandleSelect(struct Menu *self, int key, char *sourceDir) {
@@ -252,11 +267,15 @@ static bool episodesHandleSelect(struct Menu *self, int key, char *sourceDir) {
 }
 
 static bool showsSetItems(struct Menu *self, char *sourceDir) {
-	return true;
+	self->items = allocStaticLibraryItems(sourceDir, &getShowsNewLineList);
+	if(self->items)
+		return true;
+
+	return false;
 }
 
 static void showsFreeItems(struct Menu *self) {
-
+	freeAllocatedItemArr(self->items);	
 }
 
 static bool showsHandleSelect(struct Menu *self, int key, char *sourceDir) {
@@ -285,7 +304,7 @@ static bool albumsSetItems(struct Menu *self, char *sourceDir) {
 }
 
 static void albumsFreeItems(struct Menu *self) {
-
+	freeAllocatedItemArr(self->items);	
 }
 
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
@@ -433,88 +452,6 @@ static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int
 	return items;
 }
 
-// Every ITEM ** returned from this function will have its name, description, and pointer malloced.
-// Every ITEM ** returned should be freed by freeAllocatedItemArr(). 
-static ITEM **makeAllocatedItemArr(FILE *newLineList, size_t initSize) {
-	size_t nItems = initSize;
-	ITEM **items = calloc(nItems, sizeof(ITEM *));
-	if (items == NULL)
-		return NULL;
-	
-	unsigned int nLine = 1;
-	unsigned int itemIdx = 0;
-	char *itemName;
-	char *itemDesc;
-	char *line = NULL;
-	size_t len = 0;
-
-	int i = 0;
-	bool firstLine = false;
-	while(getline(&line, &len, newLineList) != -1) {
-		if(firstLine) {
-			firstLine = false;
-			continue;
-		}
-
-		// remove trailing new line char
-		line[strcspn(line, "\n")] = '\0';
-
-		// make sure there is space for another item & NULL
-		if (itemIdx+1 >= nItems) {
-			nItems *= 2;
-			ITEM **newItems = realloc(items, nItems * sizeof(ITEM *));
-			if (newItems == NULL) {
-				items[itemIdx] = NULL;
-				freeAllocatedItemArr(items);
-				free(line);
-				return NULL;
-			}
-			items = newItems;
-		}
-		
-		// Each item is 3 lines, first is name, second is description, third is user pointer.
-		if(nLine % 3 == 0) {
-			items[itemIdx] = new_item(itemName, itemDesc);
-
-			char *itemUserPtr = malloc(strlen(line)+1);
-			if (itemUserPtr == NULL) {
-				items[itemIdx + 1] = NULL;
-				freeAllocatedItemArr(items);
-				free(itemName);
-				free(itemDesc);
-				free(line);
-				return NULL;
-			}
-			strcpy(itemUserPtr, line);
-			set_item_userptr(items[itemIdx], itemUserPtr);
-			itemIdx++;
-		} 
-		else if (nLine % 3 == 2) {
-			itemDesc = strdup(line);
-			if(itemDesc == NULL) {
-				items[itemIdx + 1] = NULL;
-				freeAllocatedItemArr(items);
-				free(itemName);
-				free(line);
-				return NULL;
-			}
-		}
-		else {
-			itemName = strdup(line);
-			if(itemName == NULL) {
-				items[itemIdx+1] = NULL;
-				freeAllocatedItemArr(items);
-				free(line);
-				return NULL;
-			}
-		}
-		nLine++;
-	}
-	free(line);
-	items[itemIdx] = NULL;
-	return items;
-}
-
 static void freeAllocatedItemArr(ITEM **items) {
 	size_t i = 0;
 	ITEM *thisItem;
@@ -527,4 +464,64 @@ static void freeAllocatedItemArr(ITEM **items) {
 	}
 	free(items);
 }
+
+static ITEM **makeArtistItems(FILE *artistsNewLineList) {
+	char *line = NULL;
+	size_t len = 0;
+	if(getline(&line, &len, artistsNewLineList) == -1) {
+		fclose(artistsNewLineList);
+		return NULL;
+	}
+	line[strcspn(line, "\n")] = '\0';
+
+	int size = atoi(line);
+	ITEM **items = malloc(sizeof(ITEM *) * (size + 1));
+	if(!items) {
+		free(line);
+		fclose(artistsNewLineList);
+		return NULL;
+	}
+	items[size] = NULL;
+	
+	int itemIdx = 0;
+	size_t nLine = 1;
+	char *itemName;
+	char *itemUserPtr;
+		
+	while (getline(&line, &len, artistsNewLineList) != -1) {
+		line[strcspn(line, "\n")] = '\0';
+		for (char *p = line; *p; ++p) {
+    			if ((unsigned char)*p >= 128) *p = '?';
+		}
+
+		if(nLine % 2 != 0) {
+			itemName = strdup(line);
+			if(itemName == NULL) {
+				fclose(artistsNewLineList);
+				freeAllocatedItemArr(items);
+				free(line);
+				return NULL;
+			}
+		}
+		else {
+			items[itemIdx] = new_item(itemName, "");
+			itemUserPtr = strdup(line);
+			if (itemUserPtr == NULL) {
+				freeAllocatedItemArr(items);
+				fclose(artistsNewLineList);
+				free(itemName);
+				free(line);
+				return NULL;
+			}
+			set_item_userptr(items[itemIdx], itemUserPtr);
+			itemIdx++;
+		}
+		nLine++;
+
+	}
+	return items;
+
+
+}
+
 
