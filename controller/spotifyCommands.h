@@ -10,3 +10,6 @@ FILE *getAlbumsNewLineList(char *sourceDir, int limit, int offset);
 FILE *getShowsNewLineList(char *sourceDir, int limit, int offset); 
 FILE *getEpisodesNewLineList(char *sourceDir, int limit, int offset); 
 FILE *getArtistsNewLineList(char *sourceDir);
+int playContextAt(char *contextUri, unsigned int startIdx);
+int shuffleOff();
+int shuffleOn();

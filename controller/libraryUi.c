@@ -224,6 +224,11 @@ static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	if(key == 10) {
 		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
 	}
+	else if (key == '\'') {
+		int status = playContextAt(item_userptr(self->items[item_index(current_item(self->menu))]), 0);
+		if(status == 0)
+			shuffleOff();
+	}
 	return false;
 }
 
@@ -311,6 +316,13 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	if(key == 10) {
 		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
 	}
+	else if (key == '\'') {
+		int status = playContextAt(item_userptr(self->items[item_index(current_item(self->menu))]), 0);
+		if(status == 0)
+			shuffleOff();
+	}
+
+
 	return false;
 }
 
@@ -339,7 +351,7 @@ static void handleKeypress(int key, char *sourceDir) {
 		case KEY_RIGHT:
 			activeMenu = content;
 			break;
-		case 10:
+		default:
 			// all handleSelect functions should return true if the content menu should be focused.
 			if(activeMenu->handleSelect(activeMenu, key, sourceDir))
 				activeMenu = content;

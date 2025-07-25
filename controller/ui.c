@@ -93,6 +93,12 @@ static bool universalControl(char key, char *sourceDir) {
 				switchWindow(libraryWin, sourceDir);
 			return true;
 			break;
+		case 'z':
+			shuffleOn();
+			break;
+		case 'x':
+			shuffleOff();
+			break;
 		case 'q':
 			endwin();
 			exit(0);

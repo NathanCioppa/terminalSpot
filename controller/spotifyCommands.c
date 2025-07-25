@@ -124,3 +124,23 @@ int playContext(char *contextUri) {
 	return system(cmd);
 }
 
+int playContextAt(char *contextUri, unsigned int startIdx) {
+	char cmd[PATH_MAX];
+	snprintf(cmd, sizeof(cmd), "%s/playContext %s %d", spotifyApiCmdDir, contextUri, startIdx);
+
+	return system(cmd);
+}
+
+int shuffleOff() {
+	char cmd[PATH_MAX];
+	getDirectSpotifyCmdPath(cmd, sizeof(cmd), "shuffleOff");
+
+	return system(cmd);
+}
+
+int shuffleOn() {
+	char cmd[PATH_MAX];
+	getDirectSpotifyCmdPath(cmd, sizeof(cmd), "shuffleOn");
+
+	return system(cmd);
+}
