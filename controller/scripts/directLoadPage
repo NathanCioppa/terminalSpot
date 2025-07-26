@@ -1,0 +1,34 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/newLineList.sh"
+
+spotifyApiCmdDir="$2"
+source "$spotifyApiCmdDir/helpers/requestGet.sh"
+
+fullEndpoint="$1"
+
+pageJson="$(requestGet "$fullEndpoint" "ignoreBase")" || exit 1
+
+function handleTrack() {
+	name="$(echo "$1" | jq -r 'if has("track") then .track.name else .name end')"
+	artist="$(echo "$1" | jq -r 'if has("track") then .track.artists[0].name else .artists[0].name end')"
+	uri="$(echo "$1" | jq -r 'if has("track") then .track.uri else .uri end')"
+}
+
+function handleEpisode() {
+	name="$(echo "$1" | jq -r 'if has("track") then .track.name else .name end')"
+	artist=""
+	uri="$(echo "$1" | jq -r 'if has("track") then .track.uri else .uri end')"
+}
+
+allItems="$(echo "$pageJson" | jq -r '.next')"$'\n' || exit 1
+while read -r item; do
+	type="$(echo "$item" | jq -r 'if has("track") then .track.type else .type end')"
+	[ "$type" = "track" ] && handleTrack "$item"
+	[ "$type" = "episode" ] && handleEpisode "$item"
+	itemNewLineList="$(newLineList "$name" "$artist" "$uri")"
+	allItems+="$itemNewLineList"$'\n'
+done < <(echo "$pageJson" | jq -c '.items[]')
+
+printf "%s" "$allItems"

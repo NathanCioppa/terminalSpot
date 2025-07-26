@@ -6,6 +6,7 @@
 #include "config.h"
 #include "ui.h"
 #include "spotifyCommands.h"
+#include "utils.h"
 
 static const size_t filterSize = 6;
 static unsigned int libraryFilterMenuWidth = 0;
@@ -40,6 +41,8 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir);
 static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int, int)); 
 static void freeAllocatedItemArr(ITEM **items); 
 static ITEM **makeArtistItems(FILE *artistsNewLineList);
+
+static struct TrackTracker *likedSongsTracker;
 
 static struct Menu _filters = {
 	.menu = NULL,
@@ -288,6 +291,16 @@ static bool showsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 }
 
 static bool likedSongsSetItems(struct Menu *self, char *sourceDir) {
+	FILE *likedNewLineList = getLikedSongsNewLineList(sourceDir);
+	if(!likedNewLineList)
+		return false;
+
+	likedSongsTracker = initLazyTracks(likedNewLineList, 20, sourceDir);
+	if(!likedSongsTracker)
+		return false;
+
+	self->items = likedSongsTracker->tracks;
+
 	return true;
 }
 
@@ -296,7 +309,22 @@ static void likedSongsFreeItems(struct Menu *self) {
 }
 
 static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir) {
-	return true;
+    if (key == 10) {
+        ITEM *selectedItem = current_item(content->menu);
+        if (strcmp(item_description(selectedItem), ".") == 0) {
+            lazyLoadTracks(likedSongsTracker, sourceDir);
+
+            unpost_menu(content->menu);
+	    content->items = likedSongsTracker->tracks;
+	    //for(int i = 0; content->items[i]; i++) {
+	//	printf("%d%s\n", i, item_name(content->items[i]));
+	  //  }
+	    set_menu_items(content->menu, content->items);
+	    post_menu(content->menu);
+            return true;
+        }
+    }
+    return true;
 }
 
 static bool albumsSetItems(struct Menu *self, char *sourceDir) {

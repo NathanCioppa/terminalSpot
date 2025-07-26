@@ -144,3 +144,25 @@ int shuffleOn() {
 
 	return system(cmd);
 }
+
+FILE *directLoadPage(char *pageUrl, char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "directLoadPage");
+
+	char *saftey = "\"";
+	char cmd[strlen(cmdPath) + strlen(pageUrl) + strlen(spotifyApiCmdDir) + 5];
+	snprintf(cmd, sizeof(cmd), "%s %s%s%s %s", cmdPath, saftey, pageUrl, saftey, spotifyApiCmdDir);
+
+	//printf("%s\n", cmd);
+	return popen(cmd, "r");
+}
+
+FILE *getLikedSongsNewLineList(char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getLikedSongs");
+
+	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 10];
+	snprintf(cmd, sizeof(cmd), "%s %d %s", cmdPath, 20, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}

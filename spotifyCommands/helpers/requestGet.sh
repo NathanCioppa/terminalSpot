@@ -7,6 +7,8 @@ baseEndpoint="https://api.spotify.com/v1"
 
 function requestGet() {
 	endpoint="$1"
+	# requests for track lists give full endpoints to the next page, so baseEndpoint can be ignored to make those requests.
+	[ "$2" = "ignoreBase" ] && baseEndpoint="" 
 
 	response=$(curl -s -w "\n%{http_code}" -X GET \
 		--url "$baseEndpoint$endpoint" \
