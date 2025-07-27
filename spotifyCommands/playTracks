@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestPut.sh"
+
+data="{\"uris\":["
+
+for uri in "$@"; do
+	data+="\"$uri\","
+done
+data="${data::-1}"
+data+="]}"
+
+requestPut "/me/player/play" "$data"
+

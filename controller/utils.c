@@ -112,6 +112,9 @@ struct TrackTracker *initLazyTracks(FILE *newLineList, int limitPerRequest, char
 
 	while(getline(&line, &len, newLineList) != -1) {
 		line[strcspn(line, "\n")] = '\0';
+		for (char *p = line; *p; ++p) {
+    			if ((unsigned char)*p >= 128) *p = '?';
+		}
 	
 		if(trackLine == 1) {
 			trackName = strdup(line);	
@@ -143,90 +146,6 @@ struct TrackTracker *initLazyTracks(FILE *newLineList, int limitPerRequest, char
 	tracker->nextPage = nextPage;
 
 	return tracker;
-}
-
-bool lazyLoa(struct TrackTracker *self, char *sourceDir) {
-    FILE *tracksNewLineList = directLoadPage(self->nextPage, sourceDir);
-    if (!tracksNewLineList)
-        return false;
-
-    char *line = NULL;
-    size_t len = 0;
-
-    if (getline(&line, &len, tracksNewLineList) == -1) {
-        free(line);
-        fclose(tracksNewLineList);
-        return false;
-    }
-
-    // Determine if it's the final page
-    line[strcspn(line, "\n")] = '\0';
-    bool isFinalPage = strcmp(line, "null") == 0;
-
-    // Update nextPage
-    free(self->nextPage);
-    self->nextPage = isFinalPage ? NULL : strdup(line);
-
-    // Find current length (remove "Load more tracks" if present)
-    size_t trackIdx = 0;
-    while (self->tracks[trackIdx]) trackIdx++;
-
-    if (trackIdx > 0 && strcmp(item_description(self->tracks[trackIdx - 1]), ".") == 0) {
-        free_item(self->tracks[--trackIdx]);
-        self->tracks[trackIdx] = NULL;
-    }
-
-    // Reallocate enough space for new items + 1 ("Load more") + NULL terminator
-    size_t newSize = trackIdx + self->limitPerRequest + 2;
-    ITEM **newTracks = realloc(self->tracks, newSize * sizeof(ITEM *));
-    if (!newTracks) {
-        free(line);
-        fclose(tracksNewLineList);
-        return false;
-    }
-    self->tracks = newTracks;
-
-    // Read and construct tracks
-    unsigned int trackLine = 1;
-    char *trackName = NULL;
-    char *trackDesc = NULL;
-
-    while (getline(&line, &len, tracksNewLineList) != -1) {
-        line[strcspn(line, "\n")] = '\0';
-
-        if (trackLine == 1) {
-            free(trackName);
-            trackName = strdup(line);
-        } else if (trackLine == 2) {
-            free(trackDesc);
-            trackDesc = strdup(line);
-        } else {
-            ITEM *it = new_item(trackName, trackDesc);
-            if (!it) {
-                fprintf(stderr, "Failed to create ITEM for %s - %s\n", trackName, trackDesc);
-            } else {
-                set_item_userptr(it, strdup(line));
-                self->tracks[trackIdx++] = it;
-            }
-        }
-
-        trackLine = (trackLine % 3) + 1;
-    }
-
-    free(trackName);
-    free(trackDesc);
-    free(line);
-    fclose(tracksNewLineList);
-
-    // Append "Load more tracks" or NULL
-    if (isFinalPage) {
-        self->tracks[trackIdx] = NULL;
-    } else {
-        self->tracks[trackIdx++] = new_item("Load more tracks", ".");
-        self->tracks[trackIdx] = NULL;
-    }
-
-    return true;
 }
 
 bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir) {
@@ -269,6 +188,9 @@ bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir) {
 	size_t trackIdx = 0;
 	while(getline(&line, &len, tracksNewLineList) != -1) {
 		line[strcspn(line, "\n")] = '\0';
+		for (char *p = line; *p; ++p) {
+    			if ((unsigned char)*p >= 128) *p = '?';
+		}
 	
 		if(trackLine == 1) {
 			trackName = strdup(line);
@@ -307,7 +229,6 @@ bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir) {
 	size_t thisPageSize = i;
 
 	ITEM **expandedLazyItems = malloc((priorPageSize + thisPageSize + 1) * sizeof(ITEM *));
-	printf("%lu\n", priorPageSize + thisPageSize);
 
 	for(i=0; i<priorPageSize; i++)
 		expandedLazyItems[i] = self->tracks[i];
@@ -315,8 +236,8 @@ bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir) {
 		expandedLazyItems[i] = thisPage[i - priorPageSize];
 	expandedLazyItems[i] = NULL;
 
-	//free(thisPage);
-	//free(self->tracks);
+	free(thisPage);
+	free(self->tracks);
 	self->tracks = expandedLazyItems;
 
 	return true;

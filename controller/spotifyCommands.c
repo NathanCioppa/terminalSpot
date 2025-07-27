@@ -162,7 +162,17 @@ FILE *getLikedSongsNewLineList(char *sourceDir) {
 	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getLikedSongs");
 
 	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 10];
-	snprintf(cmd, sizeof(cmd), "%s %d %s", cmdPath, 20, spotifyApiCmdDir);
+	snprintf(cmd, sizeof(cmd), "%s %d %s", cmdPath, 50, spotifyApiCmdDir);
 
 	return popen(cmd, "r");
+}
+
+int playTrack(char *trackUri) {
+	char cmdPath[PATH_MAX];
+	getDirectSpotifyCmdPath(cmdPath, sizeof(cmdPath), "playTracks");
+
+	char cmd[strlen(cmdPath) + strlen(trackUri) + 2];
+	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, trackUri);
+
+	return system(cmd);
 }

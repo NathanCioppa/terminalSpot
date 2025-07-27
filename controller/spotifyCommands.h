@@ -15,3 +15,4 @@ int shuffleOff();
 int shuffleOn();
 FILE *directLoadPage(char *sourceDir, char *pageUrl); 
 FILE *getLikedSongsNewLineList(char *sourceDir);
+int playTrack(char *trackUri); 

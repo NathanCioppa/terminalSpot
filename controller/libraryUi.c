@@ -295,7 +295,7 @@ static bool likedSongsSetItems(struct Menu *self, char *sourceDir) {
 	if(!likedNewLineList)
 		return false;
 
-	likedSongsTracker = initLazyTracks(likedNewLineList, 20, sourceDir);
+	likedSongsTracker = initLazyTracks(likedNewLineList, 50, sourceDir);
 	if(!likedSongsTracker)
 		return false;
 
@@ -309,21 +309,24 @@ static void likedSongsFreeItems(struct Menu *self) {
 }
 
 static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir) {
-    if (key == 10) {
-        ITEM *selectedItem = current_item(content->menu);
-        if (strcmp(item_description(selectedItem), ".") == 0) {
-            lazyLoadTracks(likedSongsTracker, sourceDir);
+	if (key == 10) {
+        	ITEM *selectedItem = current_item(content->menu);
+		size_t leftOffIndex = item_index(selectedItem);
+        	if (strcmp(item_description(selectedItem), ".") == 0) {
+			unpost_menu(content->menu);
+	    		set_menu_items(content->menu, NULL);
+            		lazyLoadTracks(likedSongsTracker, sourceDir);
 
-            unpost_menu(content->menu);
-	    content->items = likedSongsTracker->tracks;
-	    //for(int i = 0; content->items[i]; i++) {
-	//	printf("%d%s\n", i, item_name(content->items[i]));
-	  //  }
-	    set_menu_items(content->menu, content->items);
-	    post_menu(content->menu);
-            return true;
-        }
-    }
+		    	content->items = likedSongsTracker->tracks;
+	    		set_menu_items(content->menu, content->items);
+	    		post_menu(content->menu);
+	    		set_current_item(content->menu, content->items[leftOffIndex]);
+            		return true;
+        	} 
+		else {
+			playTrack(item_userptr(selectedItem));
+		}
+	}
     return true;
 }
 
@@ -372,6 +375,12 @@ static void handleKeypress(int key, char *sourceDir) {
 			break;
 		case KEY_UP:
 			menu_driver(activeMenu->menu, REQ_UP_ITEM);
+			break;
+		case KEY_PPAGE:
+			menu_driver(activeMenu->menu, REQ_SCR_UPAGE);
+			break;
+		case KEY_NPAGE:
+			menu_driver(activeMenu->menu, REQ_SCR_DPAGE);
 			break;
 		case KEY_LEFT:
 			activeMenu = filters;
