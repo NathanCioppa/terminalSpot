@@ -157,12 +157,12 @@ FILE *directLoadPage(char *pageUrl, char *sourceDir) {
 	return popen(cmd, "r");
 }
 
-FILE *getLikedSongsNewLineList(char *sourceDir) {
+FILE *getLikedSongsNewLineList(char *sourceDir, unsigned int limit) {
 	char cmdPath[PATH_MAX];
 	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getLikedSongs");
 
 	char cmd[strlen(cmdPath) + strlen(spotifyApiCmdDir) + 10];
-	snprintf(cmd, sizeof(cmd), "%s %d %s", cmdPath, 50, spotifyApiCmdDir);
+	snprintf(cmd, sizeof(cmd), "%s %d %s", cmdPath, limit, spotifyApiCmdDir);
 
 	return popen(cmd, "r");
 }
@@ -175,4 +175,14 @@ int playTrack(char *trackUri) {
 	snprintf(cmd, sizeof(cmd), "%s %s", cmdPath, trackUri);
 
 	return system(cmd);
+}
+
+FILE *getArtistAlbumsNewLineList(char *artistId, unsigned int limit, char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getArtistAlbums");
+
+	char cmd[strlen(cmdPath) + strlen(artistId) + strlen(spotifyApiCmdDir) + 10];
+	snprintf(cmd, sizeof(cmd), "%s %s %d %s", cmdPath, artistId, limit, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
 }

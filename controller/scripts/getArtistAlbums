@@ -1,0 +1,22 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/newLineList.sh"
+
+spotifyApiCmdDir="$3"
+limit="$2"
+artistId="$1"
+
+albumsJson="$("$spotifyApiCmdDir/getArtistAlbums" "$artistId" "$limit")" || exit 1
+
+allAlbums="$(echo "$albumsJson" | jq -r '.next')"$'\n'
+while read -r album; do
+	name="$(echo "$album" | jq -r '.name')"
+	typ="$(echo "$album" | jq -r '.album_type')"
+	uri="$(echo "$album" | jq -r '.uri')"
+
+	albumNewLineList="$(newLineList "$name" "$typ" "$uri")"
+	allAlbums+="${albumNewLineList}"$'\n'
+done < <(echo "$albumsJson" | jq -c '.items[]')
+
+printf "%s" "$allAlbums"

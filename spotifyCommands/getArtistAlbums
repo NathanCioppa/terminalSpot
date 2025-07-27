@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestGet.sh"
+
+artistId="$1"
+limit="$2"; [ -z "$limit" ] && limit=20
+offset="$3"; [ -z "$offset" ] && offset=0
+
+requestGet "/artists/$artistId/albums?limit=$limit&offset=$offset"
+
+

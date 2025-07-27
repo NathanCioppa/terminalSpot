@@ -42,7 +42,7 @@ static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int
 static void freeAllocatedItemArr(ITEM **items); 
 static ITEM **makeArtistItems(FILE *artistsNewLineList);
 
-static struct TrackTracker *likedSongsTracker;
+static struct LazyTracker *likedSongsTracker;
 
 static struct Menu _filters = {
 	.menu = NULL,
@@ -255,6 +255,12 @@ static bool artistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	if(key == 10) {
 		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
 	}
+	else if (key == 'i') {
+		char *artistId;
+		FILE *artistAlbumsNewLineList = getArtistAlbumsNewLineList(artistId, 50, sourceDir);
+		if(artistAlbumsNewLineList)
+			setCurrentLazy(artistAlbumsNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks);
+	}
 	return false;
 }
 
@@ -291,11 +297,11 @@ static bool showsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 }
 
 static bool likedSongsSetItems(struct Menu *self, char *sourceDir) {
-	FILE *likedNewLineList = getLikedSongsNewLineList(sourceDir);
+	FILE *likedNewLineList = getLikedSongsNewLineList(sourceDir, 50);
 	if(!likedNewLineList)
 		return false;
 
-	likedSongsTracker = initLazyTracks(likedNewLineList, 50, sourceDir);
+	likedSongsTracker = initLazyTracker(likedNewLineList, 50, &lazyLoadTracks, &cleanLazyLoadedTracks);
 	if(!likedSongsTracker)
 		return false;
 
@@ -315,7 +321,7 @@ static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir) 
         	if (strcmp(item_description(selectedItem), ".") == 0) {
 			unpost_menu(content->menu);
 	    		set_menu_items(content->menu, NULL);
-            		lazyLoadTracks(likedSongsTracker, sourceDir);
+            		likedSongsTracker->expand(likedSongsTracker, sourceDir);
 
 		    	content->items = likedSongsTracker->tracks;
 	    		set_menu_items(content->menu, content->items);
@@ -327,7 +333,7 @@ static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir) 
 			playTrack(item_userptr(selectedItem));
 		}
 	}
-    return true;
+    	return true;
 }
 
 static bool albumsSetItems(struct Menu *self, char *sourceDir) {

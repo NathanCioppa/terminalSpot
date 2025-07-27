@@ -22,11 +22,18 @@ function handleEpisode() {
 	uri="$(echo "$1" | jq -r 'if has("track") then .track.uri else .uri end')"
 }
 
+function handleAlbum() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist="$(echo "$1" | jq -r '.album_type')"
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
 allItems="$(echo "$pageJson" | jq -r '.next')"$'\n' || exit 1
 while read -r item; do
 	type="$(echo "$item" | jq -r 'if has("track") then .track.type else .type end')"
 	[ "$type" = "track" ] && handleTrack "$item"
 	[ "$type" = "episode" ] && handleEpisode "$item"
+	[ "$type" = "album" ] && handleAlbum "$item"
 	itemNewLineList="$(newLineList "$name" "$artist" "$uri")"
 	allItems+="$itemNewLineList"$'\n'
 done < <(echo "$pageJson" | jq -c '.items[]')

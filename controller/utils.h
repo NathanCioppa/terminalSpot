@@ -8,13 +8,16 @@ char *formatCommandArr(char **command);
 
 #ifndef TRACKER_H
 #define TRACKER_H
-struct TrackTracker {
+struct LazyTracker {
 	ITEM **tracks;
 	char *nextPage;
 	int limitPerRequest;
+	bool (*expand)(struct LazyTracker *self, char *sourceDir);
+	void (*clean)(struct LazyTracker *self);
 };
 #endif
 
-bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir);
-struct TrackTracker *initLazyTracks(FILE *newLineList, int limitPerRequest, char *sourceDir); 
+bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir);
+struct LazyTracker *initLazyTracker(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)); 
+void cleanLazyLoadedTracks(struct LazyTracker *self);
 

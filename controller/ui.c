@@ -23,6 +23,7 @@ struct Window *devicesWin = NULL;
 struct Window *libraryWin = NULL;
 
 struct Window *currentWin = NULL;
+static struct LazyTracker *currentLazy = NULL;
 
 // Returns true if initialization is successful, and ncurses mode is entered.
 // On a false return, ncurses mode is ended.
@@ -193,5 +194,9 @@ static size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen) {
 		space = 1;
 
 	return longestNameLen + longestDescLen + menuMarkLen + space;
+}
+
+bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunction)(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)), bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)) {
+	return true;
 }
 

@@ -87,7 +87,7 @@ char *formatCommandArr(char **command) {
 	}
 }
 
-struct TrackTracker *initLazyTracks(FILE *newLineList, int limitPerRequest, char *sourceDir) {
+struct LazyTracker *initLazyTracker(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)) { 
 	char *line = NULL;
 	size_t len = 0;
 
@@ -140,15 +140,17 @@ struct TrackTracker *initLazyTracks(FILE *newLineList, int limitPerRequest, char
 		tracks[trackIdx] = NULL;
 	}
 
-	struct TrackTracker *tracker = malloc(sizeof(struct TrackTracker));
+	struct LazyTracker *tracker = malloc(sizeof(struct LazyTracker));
 	tracker->tracks = tracks;
 	tracker->limitPerRequest = limitPerRequest;
 	tracker->nextPage = nextPage;
+	tracker->expand = expand;
+	tracker->clean = clean;
 
 	return tracker;
 }
 
-bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir) {
+bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir) {
 	FILE *tracksNewLineList = directLoadPage(self->nextPage, sourceDir);
 
 	if(!tracksNewLineList)
@@ -241,4 +243,8 @@ bool lazyLoadTracks(struct TrackTracker *self, char *sourceDir) {
 	self->tracks = expandedLazyItems;
 
 	return true;
+}
+
+void cleanLazyLoadedTracks(struct LazyTracker *self) {
+
 }

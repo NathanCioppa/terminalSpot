@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <menu.h>
 #include <stdbool.h>
+#include "utils.h"
 
 #ifndef MENU_H
 #define MENU_H
@@ -30,3 +31,4 @@ bool initializeUi(char *sourceDir);
 bool startDefaultWindow(char *sourceDir);
 void runUiLooper(char *sourceDir);
 
+bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunction)(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)), bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self));
