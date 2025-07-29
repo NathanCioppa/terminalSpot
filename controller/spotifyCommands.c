@@ -186,3 +186,13 @@ FILE *getArtistAlbumsNewLineList(char *artistId, unsigned int limit, char *sourc
 
 	return popen(cmd, "r");
 }
+
+FILE *getAlbumTracksNewLineList(char *albumId, char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getAlbumTracks");
+
+	char cmd[strlen(cmdPath) + strlen(albumId) + strlen(spotifyApiCmdDir) + 3];
+	snprintf(cmd, sizeof(cmd), "%s %s %s", cmdPath, albumId, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}

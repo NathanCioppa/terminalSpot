@@ -34,4 +34,8 @@ void runUiLooper(char *sourceDir);
 bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunction)(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)), bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self));
 void closeCurrentLazy();
 
-extern struct LazyTracker *currentLazy;
+extern struct LazyTracker *currentLazyTracker;
+extern char *lazyContext;
+extern char *backLazyContext;
+extern struct Menu *backLazy;
+extern struct LazyTracker *backLazyTracker;

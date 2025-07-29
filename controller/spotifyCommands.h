@@ -17,3 +17,4 @@ FILE *directLoadPage(char *sourceDir, char *pageUrl);
 FILE *getLikedSongsNewLineList(char *sourceDir, unsigned int limit);
 int playTrack(char *trackUri); 
 FILE *getArtistAlbumsNewLineList(char *artistId, unsigned int limit, char *sourceDir);
+FILE *getAlbumTracksNewLineList(char *albumId, char *sourceDir); 

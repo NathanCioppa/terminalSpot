@@ -20,4 +20,5 @@ struct LazyTracker {
 bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir);
 struct LazyTracker *initLazyTracker(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)); 
 void cleanLazyLoadedTracks(struct LazyTracker *self);
+void uriToId(char *idDest, char *uri); 
 

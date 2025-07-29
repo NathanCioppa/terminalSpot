@@ -23,10 +23,12 @@ struct Window *devicesWin = NULL;
 struct Window *libraryWin = NULL;
 
 struct Window *currentWin = NULL;
-struct LazyTracker *currentLazy = NULL;
-static struct LazyTracker *lazyParentTracker = NULL;
-static struct Menu *rootMenu = NULL;
-static struct Menu *lazyParent = NULL;
+struct LazyTracker *currentLazyTracker = NULL;
+struct LazyTracker *backLazyTracker = NULL;
+struct Menu *backLazy = NULL;
+
+char *lazyContext = NULL;
+char *backLazyContext = NULL;
 
 // Returns true if initialization is successful, and ncurses mode is entered.
 // On a false return, ncurses mode is ended.
@@ -207,13 +209,21 @@ bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunctio
 	tracker->expand = expand;
 	tracker->clean = clean;
 
-	currentLazy = tracker;
+	currentLazyTracker = tracker;
 	
 	return true;
 }
 
 void closeCurrentLazy() {
-	currentLazy->clean(currentLazy);
-	currentLazy = NULL;
+	currentLazyTracker->clean(currentLazyTracker);
+	lazyContext = NULL;
+	currentLazyTracker = NULL;
+
+	if(backLazyTracker) {
+		currentLazyTracker = backLazyTracker;
+		backLazyTracker = NULL;
+		lazyContext = backLazyContext;
+		backLazyContext = NULL;
+	}
 }
 

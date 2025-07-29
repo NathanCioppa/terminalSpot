@@ -37,6 +37,7 @@ static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir);
 static bool albumsSetItems(struct Menu *self, char *sourceDir);
 static void albumsFreeItems(struct Menu *self);
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir);
+static bool handleLazyTrackSelect(struct Menu *self, int key, char *sourceDir);
 
 static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int, int)); 
 static void freeAllocatedItemArr(ITEM **items); 
@@ -116,6 +117,15 @@ static struct Menu _lazyArtistAlbums = {
 };
 static struct Menu *lazyArtistAlbums = &_lazyArtistAlbums;
 
+static struct Menu _lazyTracks = {
+	.menu = NULL,
+	.items = NULL,
+	.setItems = NULL,
+	.freeItems = NULL,
+	.handleSelect = &handleLazyTrackSelect,
+};
+static struct Menu *lazyTracks = &_lazyTracks;
+
 static struct Menu *content;
 static struct Menu *activeMenu;
 
@@ -164,6 +174,8 @@ bool initializeLibraryWin(char *sourceDir) {
 	for(size_t i = 0; i < filterSize; i++) {
 		filterMenusOrdered[i]->menu = contentMENU;
 	}
+	lazyArtistAlbums->menu = contentMENU;
+	lazyTracks->menu = contentMENU;
 
 	return true;
 }
@@ -213,9 +225,14 @@ static bool filterHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	size_t selectedIdx = item_index(current_item(self->menu));
 	unpost_menu(content->menu);
 	set_menu_items(content->menu, NULL);
-	if(currentLazy) {
-		currentLazy->clean(currentLazy);
-		currentLazy = NULL;
+	if(currentLazyTracker) {
+		currentLazyTracker->clean(currentLazyTracker);
+		currentLazyTracker = NULL;
+	}
+	if(backLazyTracker) {
+		backLazyTracker->clean(backLazyTracker);
+		backLazyTracker = NULL;
+		backLazy = NULL;
 	}
 	content = filterMenusOrdered[selectedIdx];
 	set_menu_items(content->menu, content->items);
@@ -272,27 +289,13 @@ static bool artistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	}
 	else if (key == 'i') {
 		char artistId[100];
-		int colonCount = 0;
-		int idIdx = 0;
-		for(int i=0; uri[i]; i++) {
-			if(colonCount == 2) {
-				artistId[idIdx] = uri[i];
-				idIdx++;
-				continue;
-			}
-			if(uri[i] == ':'){
-				colonCount++;
-				continue;
-			}
-		}
-		artistId[idIdx] = '\0';
+		uriToId(artistId, uri);
 		FILE *artistAlbumsNewLineList = getArtistAlbumsNewLineList(artistId, 50, sourceDir);
 		if(artistAlbumsNewLineList && setCurrentLazy(artistAlbumsNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks)) {
 			unpost_menu(content->menu);
 			set_menu_items(content->menu, NULL);
 			content = lazyArtistAlbums;
-			content->menu = artists->menu;
-			content->items = currentLazy->tracks;
+			content->items = currentLazyTracker->tracks;
 			set_menu_items(content->menu, content->items);
 			post_menu(content->menu);
 			return true;
@@ -387,14 +390,16 @@ static void albumsFreeItems(struct Menu *self) {
 }
 
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
+        ITEM *selectedItem = current_item(content->menu);
+	size_t leftOffIndex = item_index(selectedItem);
+	char *userptr = item_userptr(selectedItem);
+	bool isExpandOption = strcmp(item_description(selectedItem), ".") == 0;
 	if(key == 10) {
-		if(strcmp(item_description(current_item(self->menu)), ".") == 0) {
-        		ITEM *selectedItem = current_item(content->menu);
-			size_t leftOffIndex = item_index(selectedItem);
+		if(isExpandOption) {
 			unpost_menu(content->menu);
 	    		set_menu_items(content->menu, NULL);
-			currentLazy->expand(currentLazy, sourceDir);
-		    	content->items = currentLazy->tracks;
+			currentLazyTracker->expand(currentLazyTracker, sourceDir);
+		    	content->items = currentLazyTracker->tracks;
 	    		set_menu_items(content->menu, content->items);
 	    		post_menu(content->menu);
 	    		set_current_item(content->menu, content->items[leftOffIndex]);
@@ -403,6 +408,29 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 		else 
 			playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
 	}
+	else if(isExpandOption) {
+		return false;
+	}
+	else if(key == 'i') {
+		char albumId[100];
+		uriToId(albumId, userptr);
+		FILE *albumTracksNewLineList = getAlbumTracksNewLineList(albumId, sourceDir); 
+		if(!albumTracksNewLineList)
+			return false;
+
+		if(setCurrentLazy(albumTracksNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks)) {
+			lazyContext = userptr;
+			unpost_menu(content->menu);
+			set_menu_items(content->menu, NULL);
+			content = lazyTracks;
+			content->items = currentLazyTracker->tracks;
+			set_menu_items(content->menu, content->items);
+			post_menu(content->menu);
+			return true;
+
+		}
+		return true;
+	}
 	else if (key == '\'') {
 		int status = playContextAt(item_userptr(self->items[item_index(current_item(self->menu))]), 0);
 		if(status == 0)
@@ -410,6 +438,28 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	}
 
 
+	return false;
+}
+
+static bool handleLazyTrackSelect(struct Menu *self, int key, char *sourceDir) {
+	ITEM *track = current_item(self->menu);
+	size_t leftOffIndex = item_index(track);
+	bool isExpandOption = strcmp(item_description(track), ".") == 0;
+	if(key == 10) {
+		if(isExpandOption) {
+			unpost_menu(content->menu);
+	    		set_menu_items(content->menu, NULL);
+			currentLazyTracker->expand(currentLazyTracker, sourceDir);
+		    	content->items = currentLazyTracker->tracks;
+	    		set_menu_items(content->menu, content->items);
+	    		post_menu(content->menu);
+	    		set_current_item(content->menu, content->items[leftOffIndex]);
+			return true;
+		}
+		playContextAt(lazyContext, item_index(track));
+	}
+	else if(isExpandOption)
+		return false;
 	return false;
 }
 

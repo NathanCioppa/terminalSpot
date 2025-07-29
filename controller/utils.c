@@ -260,3 +260,20 @@ void cleanLazyLoadedTracks(struct LazyTracker *self) {
 	}
 	free(self->tracks);
 }
+
+void uriToId(char *idDest, char *uri) {
+	int colonCount = 0;
+	int idIdx = 0;
+	for(int i=0; uri[i]; i++) {
+		if(colonCount == 2) {
+			idDest[idIdx] = uri[i];
+			idIdx++;
+			continue;
+		}
+		if(uri[i] == ':'){
+			colonCount++;
+			continue;
+		}
+	}
+	idDest[idIdx] = '\0';
+}
