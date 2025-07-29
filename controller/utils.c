@@ -133,7 +133,7 @@ struct LazyTracker *initLazyTracker(FILE *newLineList, int limitPerRequest, bool
 	free(line);
 
 	if(trackIdx >= limitPerRequest - 2) {
-		tracks[trackIdx] = new_item("Load more tracks", ".");
+		tracks[trackIdx] = new_item("Load More Items ->", ".");
 		tracks[trackIdx+1] = NULL;
 	}
 	else {
@@ -216,7 +216,7 @@ bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir) {
 	if(isFinalPage)
 		thisPage[trackIdx] = NULL;
 	else {
-		thisPage[trackIdx] = new_item("Load more tracks", ".");
+		thisPage[trackIdx] = new_item("Load More Items ->", ".");
 		thisPage[trackIdx+1] = NULL;
 	}
 

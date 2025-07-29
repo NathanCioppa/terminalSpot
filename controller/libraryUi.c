@@ -254,8 +254,32 @@ static void playlistsFreeItems(struct Menu *self) {
 }
 
 static bool playlistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
+	ITEM *selection = current_item(self->menu);
+	char *uri = item_userptr(selection);
 	if(key == 10) {
-		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
+		playContext(uri);
+	}
+	else if (key == 'i') {
+		char playlistId[100];
+		uriToId(playlistId, uri);
+		FILE *playlistTracksNewLineList = getPlaylistTracksNewLineList(playlistId, 50,sourceDir); 
+		if(!playlistTracksNewLineList)
+			return false;
+
+		if(setCurrentLazy(playlistTracksNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks)) {
+			lazyContext = uri;
+			unpost_menu(content->menu);
+			set_menu_items(content->menu, NULL);
+			content = lazyTracks;
+			content->items = currentLazyTracker->tracks;
+			set_menu_items(content->menu, content->items);
+			post_menu(content->menu);
+			return true;
+
+		}
+		return true;
+
+		
 	}
 	else if (key == '\'') {
 		int status = playContextAt(item_userptr(self->items[item_index(current_item(self->menu))]), 0);

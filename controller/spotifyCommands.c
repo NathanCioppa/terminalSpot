@@ -196,3 +196,13 @@ FILE *getAlbumTracksNewLineList(char *albumId, char *sourceDir) {
 
 	return popen(cmd, "r");
 }
+
+FILE *getPlaylistTracksNewLineList(char *playlistId, unsigned int limit, char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getPlaylistTracks");
+
+	char cmd[strlen(cmdPath) + strlen(playlistId) + strlen(spotifyApiCmdDir) + 10];
+	snprintf(cmd, sizeof(cmd), "%s %s %d %s", cmdPath, playlistId, limit, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}
