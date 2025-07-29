@@ -18,7 +18,7 @@ function handleTrack() {
 
 function handleEpisode() {
 	name="$(echo "$1" | jq -r 'if has("track") then .track.name else .name end')"
-	artist=""
+	artist=" "
 	uri="$(echo "$1" | jq -r 'if has("track") then .track.uri else .uri end')"
 }
 

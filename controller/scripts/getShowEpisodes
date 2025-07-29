@@ -1,0 +1,21 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/newLineList.sh"
+
+spotifyApiCmdDir="$3"
+limit="$2"
+showId="$1"
+
+episodesJson="$("$spotifyApiCmdDir/getShowEpisodes" "$showId" "$limit")" || exit 1
+
+allEpisodes="$(echo "$episodesJson" | jq -r '.next')"$'\n'
+while read -r track; do
+	name="$(echo "$track" | jq -r '.name')"
+	uri="$(echo "$track" | jq -r '.uri')"
+	artist=" "
+	trackNewLineList="$(newLineList "$name" "$artist" "$uri")"
+	allEpisodes+="${trackNewLineList}"$'\n'
+done < <(echo "$episodesJson" | jq -c '.items[]')
+
+printf "%s" "$allEpisodes"

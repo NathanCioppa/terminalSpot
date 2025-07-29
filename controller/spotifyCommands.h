@@ -19,3 +19,4 @@ int playTrack(char *trackUri);
 FILE *getArtistAlbumsNewLineList(char *artistId, unsigned int limit, char *sourceDir);
 FILE *getAlbumTracksNewLineList(char *albumId, char *sourceDir); 
 FILE *getPlaylistTracksNewLineList(char *playlistId, unsigned int limit, char *sourceDir); 
+FILE *getShowEpisodesNewLineList(char *showId, unsigned int limit, char *sourceDir); 

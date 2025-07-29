@@ -206,3 +206,13 @@ FILE *getPlaylistTracksNewLineList(char *playlistId, unsigned int limit, char *s
 
 	return popen(cmd, "r");
 }
+
+FILE *getShowEpisodesNewLineList(char *showId, unsigned int limit, char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "getShowEpisodes");
+	
+	char cmd[strlen(cmdPath) + strlen(showId) + strlen(spotifyApiCmdDir) + 10];
+	snprintf(cmd, sizeof(cmd), "%s %s %d %s", cmdPath, showId, limit, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}

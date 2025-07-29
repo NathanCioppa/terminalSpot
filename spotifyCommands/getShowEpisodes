@@ -1,0 +1,12 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd  "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestGet.sh"
+
+id="$1"
+limit="20"; [ -z "$1" ] || limit="$2"
+offset="0"; [ -z "$2" ] || offset="$3"
+
+endpoint="/shows/$id/episodes?limit=$limit&offset=$offset"
+
+requestGet "$endpoint"
+

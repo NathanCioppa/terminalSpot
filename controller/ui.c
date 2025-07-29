@@ -210,6 +210,7 @@ bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunctio
 	tracker->clean = clean;
 
 	currentLazyTracker = tracker;
+	isEpisode = false;
 	
 	return true;
 }

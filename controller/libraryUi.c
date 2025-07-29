@@ -42,6 +42,7 @@ static bool handleLazyTrackSelect(struct Menu *self, int key, char *sourceDir);
 static ITEM **allocStaticLibraryItems(char *sourceDir, FILE* (*func)(char *, int, int)); 
 static void freeAllocatedItemArr(ITEM **items); 
 static ITEM **makeArtistItems(FILE *artistsNewLineList);
+bool isEpisode = false;
 
 static struct LazyTracker *likedSongsTracker;
 
@@ -341,6 +342,27 @@ static void episodesFreeItems(struct Menu *self) {
 }
 
 static bool episodesHandleSelect(struct Menu *self, int key, char *sourceDir) {
+	ITEM *selectedItem = current_item(content->menu);
+	size_t leftOffIndex = item_index(selectedItem);
+	char *uri = item_userptr(selectedItem);
+	bool isExpandOption = strcmp(item_description(selectedItem), ".") == 0;
+	if(key == 10) {
+		if(isExpandOption) {
+			unpost_menu(content->menu);
+	    		set_menu_items(content->menu, NULL);
+			currentLazyTracker->expand(currentLazyTracker, sourceDir);
+		    	content->items = currentLazyTracker->tracks;
+	    		set_menu_items(content->menu, content->items);
+	    		post_menu(content->menu);
+	    		set_current_item(content->menu, content->items[leftOffIndex]);
+			return true;
+		} 
+		else 
+			playTrack(uri);	
+	}
+	else if(isExpandOption) {
+		return false;
+	}
 	return true;
 }
 
@@ -357,6 +379,31 @@ static void showsFreeItems(struct Menu *self) {
 }
 
 static bool showsHandleSelect(struct Menu *self, int key, char *sourceDir) {
+	ITEM *selection = current_item(self->menu);
+	char *uri = item_userptr(selection);
+	if(key == 10 || key == '\'')
+		playContext(uri);
+	else if(key == 'i') {
+		char showId[100];
+		uriToId(showId, uri);
+		FILE *showEpisodesNewLineList = getShowEpisodesNewLineList(showId, 50,sourceDir); 
+		if(!showEpisodesNewLineList)
+			return false;
+
+		if(setCurrentLazy(showEpisodesNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks)) {
+			lazyContext = uri;
+			unpost_menu(content->menu);
+			set_menu_items(content->menu, NULL);
+			content = lazyTracks;
+			content->items = currentLazyTracker->tracks;
+			set_menu_items(content->menu, content->items);
+			post_menu(content->menu);
+			isEpisode = true;
+			return true;
+
+		}
+		return true;
+	} 
 	return true;
 }
 
@@ -480,7 +527,10 @@ static bool handleLazyTrackSelect(struct Menu *self, int key, char *sourceDir) {
 	    		set_current_item(content->menu, content->items[leftOffIndex]);
 			return true;
 		}
-		playContextAt(lazyContext, item_index(track));
+		if(isEpisode)
+			playTrack(item_userptr(track));
+		else
+			playContextAt(lazyContext, item_index(track));
 	}
 	else if(isExpandOption)
 		return false;
