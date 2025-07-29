@@ -246,5 +246,17 @@ bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir) {
 }
 
 void cleanLazyLoadedTracks(struct LazyTracker *self) {
+	ITEM *item;
+	for(size_t i = 0; (item = self->tracks[i]); i++) {
+		if(strcmp(item_description(item), ".") == 0) {
+			free_item(item);
+			continue;
+		}
 
+		free((char *)item_name(item));
+		free((char *)item_description(item));
+		free(item_userptr(item));
+		free_item(item);
+	}
+	free(self->tracks);
 }

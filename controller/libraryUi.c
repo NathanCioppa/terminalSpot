@@ -107,6 +107,15 @@ static struct Menu _likedSongs = {
 };
 static struct Menu *likedSongs = &_likedSongs;
 
+static struct Menu _lazyArtistAlbums = {
+	.menu = NULL,
+	.items = NULL,
+	.setItems = NULL,
+	.freeItems = NULL,
+	.handleSelect = &albumsHandleSelect,
+};
+static struct Menu *lazyArtistAlbums = &_lazyArtistAlbums;
+
 static struct Menu *content;
 static struct Menu *activeMenu;
 
@@ -202,11 +211,15 @@ static bool filterHandleSelect(struct Menu *self, int key, char *sourceDir) {
 		return false;
 
 	size_t selectedIdx = item_index(current_item(self->menu));
-	content = filterMenusOrdered[selectedIdx];
 	unpost_menu(content->menu);
+	set_menu_items(content->menu, NULL);
+	if(currentLazy) {
+		currentLazy->clean(currentLazy);
+		currentLazy = NULL;
+	}
+	content = filterMenusOrdered[selectedIdx];
 	set_menu_items(content->menu, content->items);
 	post_menu(content->menu);
-	wrefresh(libraryWin->window);
 
 	return true;
 }
@@ -252,14 +265,38 @@ static void artistsFreeItems(struct Menu *self) {
 }
 
 static bool artistsHandleSelect(struct Menu *self, int key, char *sourceDir) {
+	ITEM *selection = current_item(self->menu);
+	char *uri = item_userptr(selection);
 	if(key == 10) {
-		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
+		playContext(uri);	
 	}
 	else if (key == 'i') {
-		char *artistId;
+		char artistId[100];
+		int colonCount = 0;
+		int idIdx = 0;
+		for(int i=0; uri[i]; i++) {
+			if(colonCount == 2) {
+				artistId[idIdx] = uri[i];
+				idIdx++;
+				continue;
+			}
+			if(uri[i] == ':'){
+				colonCount++;
+				continue;
+			}
+		}
+		artistId[idIdx] = '\0';
 		FILE *artistAlbumsNewLineList = getArtistAlbumsNewLineList(artistId, 50, sourceDir);
-		if(artistAlbumsNewLineList)
-			setCurrentLazy(artistAlbumsNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks);
+		if(artistAlbumsNewLineList && setCurrentLazy(artistAlbumsNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks)) {
+			unpost_menu(content->menu);
+			set_menu_items(content->menu, NULL);
+			content = lazyArtistAlbums;
+			content->menu = artists->menu;
+			content->items = currentLazy->tracks;
+			set_menu_items(content->menu, content->items);
+			post_menu(content->menu);
+			return true;
+		}
 	}
 	return false;
 }
@@ -351,7 +388,20 @@ static void albumsFreeItems(struct Menu *self) {
 
 static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 	if(key == 10) {
-		playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
+		if(strcmp(item_description(current_item(self->menu)), ".") == 0) {
+        		ITEM *selectedItem = current_item(content->menu);
+			size_t leftOffIndex = item_index(selectedItem);
+			unpost_menu(content->menu);
+	    		set_menu_items(content->menu, NULL);
+			currentLazy->expand(currentLazy, sourceDir);
+		    	content->items = currentLazy->tracks;
+	    		set_menu_items(content->menu, content->items);
+	    		post_menu(content->menu);
+	    		set_current_item(content->menu, content->items[leftOffIndex]);
+			return true;
+		} 
+		else 
+			playContext(item_userptr(self->items[item_index(current_item(self->menu))]));	
 	}
 	else if (key == '\'') {
 		int status = playContextAt(item_userptr(self->items[item_index(current_item(self->menu))]), 0);

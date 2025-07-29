@@ -32,3 +32,6 @@ bool startDefaultWindow(char *sourceDir);
 void runUiLooper(char *sourceDir);
 
 bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunction)(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)), bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self));
+void closeCurrentLazy();
+
+extern struct LazyTracker *currentLazy;
