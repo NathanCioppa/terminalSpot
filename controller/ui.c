@@ -104,6 +104,7 @@ static bool universalControl(char key, char *sourceDir) {
 		case 's':
 			if(currentWin != searchUi)
 				switchWindow(searchUi, sourceDir);
+			searchUi->handleKeypress(key, sourceDir);	
 			return true;
 			break;
 		case 'z':
