@@ -489,6 +489,10 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 		if(!albumTracksNewLineList)
 			return false;
 
+		backLazyTracker = currentLazyTracker;
+		backLazy = content;
+		backLazyContext = lazyContext;
+
 		if(setCurrentLazy(albumTracksNewLineList, &initLazyTracker, &lazyLoadTracks, &cleanLazyLoadedTracks)) {
 			lazyContext = userptr;
 			unpost_menu(content->menu);

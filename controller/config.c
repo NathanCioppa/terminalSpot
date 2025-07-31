@@ -14,3 +14,12 @@ const unsigned int episodesIdx = 5;
 // The index of the library filter to default to, range same as above.
 const unsigned int defaultIdx = 0;
 
+const unsigned int searchPlaylistsIdx = 0;
+const unsigned int searchAlbumsIdx = 1;
+const unsigned int searchSongsIdx = 2;
+const unsigned int searchArtistsIdx = 3;
+const unsigned int searchShowsIdx = 4;
+const unsigned int searchEpisodesIdx = 5;
+
+const unsigned int searchDefaultIdx = 0;
+

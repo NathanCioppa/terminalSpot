@@ -11,6 +11,7 @@
 #include "spotifyCommands.h"
 #include "devicesUi.h"
 #include "libraryUi.h"
+#include "searchUi.h"
 
 static bool drawName(char *sourceDir);
 static size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen);
@@ -29,6 +30,7 @@ struct Menu *backLazy = NULL;
 
 char *lazyContext = NULL;
 char *backLazyContext = NULL;
+const unsigned int headerHeight = 2;
 
 // Returns true if initialization is successful, and ncurses mode is entered.
 // On a false return, ncurses mode is ended.
@@ -44,12 +46,12 @@ bool initializeUi(char *sourceDir) {
 	noecho();
 	refresh();
 
-	int headerHeight = 2;
 	headerWINDOW = newwin(headerHeight, COLS, 0, 0);
 	devicesWin->window = newwin(LINES - headerHeight, COLS, headerHeight, 0);
 	libraryWin->window = newwin(LINES - headerHeight, COLS, headerHeight, 0);
+	initializeSearchUi();
 
-	bool windowsAllocated = headerWINDOW && devicesWin->window && libraryWin->window;
+	bool windowsAllocated = headerWINDOW && devicesWin->window && libraryWin->window && searchUi->window;
 	if(windowsAllocated && drawName(sourceDir)) {
 		wrefresh(headerWINDOW);
 		initializeDevicesWin();
@@ -97,6 +99,11 @@ static bool universalControl(char key, char *sourceDir) {
 		case 'l':
 			if(currentWin != libraryWin)
 				switchWindow(libraryWin, sourceDir);
+			return true;
+			break;
+		case 's':
+			if(currentWin != searchUi)
+				switchWindow(searchUi, sourceDir);
 			return true;
 			break;
 		case 'z':
@@ -227,4 +234,3 @@ void closeCurrentLazy() {
 		backLazyContext = NULL;
 	}
 }
-

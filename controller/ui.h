@@ -39,3 +39,4 @@ extern char *lazyContext;
 extern char *backLazyContext;
 extern struct Menu *backLazy;
 extern struct LazyTracker *backLazyTracker;
+extern const unsigned int headerHeight;
