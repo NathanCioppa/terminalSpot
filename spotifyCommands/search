@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd  "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/helpers/requestGet.sh"
+
+endpoint="/search"
+filter="$1" # comma separated without spaces (tracks,albums,episodes,artists,playlists,shows,audiobooks)
+[ -z "$filter" ] || filter="&type=$filter"
+querry="$2"
+limit="$3"; [ -z "$limit" ] && limit=20;
+offset="$4"; [ -z "$offset" ] && offset=0;
+
+encodedQ=$(jq -nr --arg s "$querry" '$s|@uri')
+
+requestGet "$endpoint?q=$encodedQ$filter&limit=$limit&offset=$offset"

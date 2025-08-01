@@ -1,0 +1,70 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/newLineList.sh"
+
+querry="$1"
+filter="$2"
+limit="$3"
+spotifyApiCmdDir="$4"
+
+case "$filter" in
+	"al") f="album"; func="handleAlbum";;
+	"ar") f="artist"; func="handleArtist";;
+	"tr" | "so") f="track"; func="handleTrack";;
+	"sh") f="show"; func="handleShow";;
+	"ep") f="episode"; func="handleEpisode";;
+	"pl") f="playlist"; func="handlePlaylist";;
+	*) exit 1;;
+esac
+filter="$f"
+
+searchJson="$("$spotifyApiCmdDir/search" "$filter" "$querry" "$limit")" || exit 1
+
+resultObj=$(echo "$searchJson" | jq -r --arg f "$filter" '.[$f + "s"]')
+allItems="$(echo "$resultObj" | jq -r '.next')"
+
+function handleAlbum() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist="$(echo "$1" | jq -r '.artists[0].name')"
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleArtist() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist=" "
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleTrack() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist="$(echo "$1" | jq -r '.artists[0].name')"
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleShow() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist="$(echo "$1" | jq -r '.publisher')"
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleEpisode() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist=" "
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handlePlaylist() {
+	name="$(echo "$1" | jq -r '.name')"
+	artist="$(echo "$1" | jq -r '.owner.display_name')"
+	uri="$(echo "$1" | jq -r '.uri')"
+}
+
+while read -r item; do
+	"$func" "$item"
+	itemNewLineList="$(newLineList "$name" "$artist" "$uri")"
+	[ "$uri" = "null" ] || allItems+="$itemNewLineList"$'\n'
+done < <(echo "$resultObj" | jq -c '.items[]')
+
+printf "%s" "$allItems"
+
