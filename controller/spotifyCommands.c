@@ -216,3 +216,13 @@ FILE *getShowEpisodesNewLineList(char *showId, unsigned int limit, char *sourceD
 
 	return popen(cmd, "r");
 }
+
+FILE *getSearchResults(char *query, char *filter, unsigned int limit, char *sourceDir) {
+	char cmdPath[PATH_MAX];
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "search");
+
+	char cmd[strlen(cmdPath) + strlen(filter) + strlen(query) + strlen(spotifyApiCmdDir) + 10];
+	snprintf(cmd, sizeof(cmd), "%s \"%s\" %s %d %s", cmdPath, query, filter, limit, spotifyApiCmdDir);
+
+	return popen(cmd, "r");
+}

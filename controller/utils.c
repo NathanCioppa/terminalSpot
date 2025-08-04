@@ -259,6 +259,7 @@ void cleanLazyLoadedTracks(struct LazyTracker *self) {
 		free_item(item);
 	}
 	free(self->tracks);
+	self->tracks = NULL;
 }
 
 void uriToId(char *idDest, char *uri) {

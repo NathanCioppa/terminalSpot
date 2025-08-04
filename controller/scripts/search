@@ -22,7 +22,7 @@ filter="$f"
 searchJson="$("$spotifyApiCmdDir/search" "$filter" "$querry" "$limit")" || exit 1
 
 resultObj=$(echo "$searchJson" | jq -r --arg f "$filter" '.[$f + "s"]')
-allItems="$(echo "$resultObj" | jq -r '.next')"
+allItems="$(echo "$resultObj" | jq -r '.next')"$'\n'
 
 function handleAlbum() {
 	name="$(echo "$1" | jq -r '.name')"

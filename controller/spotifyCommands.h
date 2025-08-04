@@ -20,3 +20,4 @@ FILE *getArtistAlbumsNewLineList(char *artistId, unsigned int limit, char *sourc
 FILE *getAlbumTracksNewLineList(char *albumId, char *sourceDir); 
 FILE *getPlaylistTracksNewLineList(char *playlistId, unsigned int limit, char *sourceDir); 
 FILE *getShowEpisodesNewLineList(char *showId, unsigned int limit, char *sourceDir); 
+FILE *getSearchResults(char *query, char *filter, unsigned int limit, char *sourceDir); 
