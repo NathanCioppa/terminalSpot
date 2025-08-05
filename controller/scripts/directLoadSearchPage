@@ -1,0 +1,67 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/newLineList.sh"
+
+spotifyApiCmdDir="$2"
+source "$spotifyApiCmdDir/helpers/requestGet.sh"
+
+fullEndpoint="$1"
+
+pageJson="$(requestGet "$fullEndpoint" "ignoreBase")" || exit 1
+
+keys=(albums playlists tracks shows episodes artists)
+for key in "${keys[@]}"; do
+    if echo "$pageJson" | jq -e "has(\"$key\")" > /dev/null; then
+        func="handle${key^}"
+	object="$(echo "$pageJson" | jq -c ".${key}")"
+        break
+    fi
+done
+
+[ -z "$func" ] && exit 1
+
+function handleAlbums() {
+    name="$(echo "$1" | jq -r '.name')"
+    artist="$(echo "$1" | jq -r '.artists[0].name')"
+    uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handlePlaylists() {
+    name="$(echo "$1" | jq -r '.name')"
+    artist="$(echo "$1" | jq -r '.owner.display_name')"
+    uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleTracks() {
+    name="$(echo "$1" | jq -r '.name')"
+    artist="$(echo "$1" | jq -r '.artists[0].name')"
+    uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleShows() {
+    name="$(echo "$1" | jq -r '.name')"
+    artist="$(echo "$1" | jq -r '.publisher')"
+    uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleEpisodes() {
+    name="$(echo "$1" | jq -r '.name')"
+    artist=" "
+    uri="$(echo "$1" | jq -r '.uri')"
+}
+
+function handleArtists() {
+    name="$(echo "$1" | jq -r '.name')"
+    artist=" "
+    uri="$(echo "$1" | jq -r '.uri')"
+}
+
+allItems="$(echo "$object" | jq -r '.next')"$'\n'
+while read -r item; do
+	"$func" "$item"
+	itemNewLineList="$(newLineList "$name" "$artist" "$uri")"
+	allItems+="$itemNewLineList"$'\n'
+done < <(echo "$object" | jq -c '.items[]')
+
+printf "%s" "$allItems"

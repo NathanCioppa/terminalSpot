@@ -145,9 +145,14 @@ int shuffleOn() {
 	return system(cmd);
 }
 
-FILE *directLoadPage(char *pageUrl, char *sourceDir) {
+FILE *directLoadPage(char *pageUrl, char *sourceDir, bool isSearch) {
+	char *cmdName = NULL;
+	if(isSearch)
+		cmdName = "directLoadSearchPage";
+	else
+		cmdName = "directLoadPage";
 	char cmdPath[PATH_MAX];
-	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, "directLoadPage");
+	getScriptPath(cmdPath, sizeof(cmdPath), sourceDir, cmdName);
 
 	char *saftey = "\"";
 	char cmd[strlen(cmdPath) + strlen(pageUrl) + strlen(spotifyApiCmdDir) + 5];

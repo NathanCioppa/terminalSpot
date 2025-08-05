@@ -209,7 +209,7 @@ static size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen) {
 	return longestNameLen + longestDescLen + menuMarkLen + space;
 }
 
-bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunction)(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)), bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)) {
+bool setCurrentLazy(FILE *lazyInitNewLineList, struct LazyTracker *(*initFunction)(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir, bool isSearch), void (*clean)(struct LazyTracker *self)), bool (*expand)(struct LazyTracker *self, char *sourceDir, bool isSearch), void (*clean)(struct LazyTracker *self)) {
 	struct LazyTracker *tracker = initFunction(lazyInitNewLineList, 50, expand, clean);
 	if(!tracker)
 		return false;

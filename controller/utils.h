@@ -12,13 +12,13 @@ struct LazyTracker {
 	ITEM **tracks;
 	char *nextPage;
 	int limitPerRequest;
-	bool (*expand)(struct LazyTracker *self, char *sourceDir);
+	bool (*expand)(struct LazyTracker *self, char *sourceDir, bool isSearch);
 	void (*clean)(struct LazyTracker *self);
 };
 #endif
 
-bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir);
-struct LazyTracker *initLazyTracker(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir), void (*clean)(struct LazyTracker *self)); 
+bool lazyLoadTracks(struct LazyTracker *self, char *sourceDir, bool isSearch); 
+struct LazyTracker *initLazyTracker(FILE *newLineList, int limitPerRequest, bool (*expand)(struct LazyTracker *self, char *sourceDir, bool isSearch), void (*clean)(struct LazyTracker *self)); 
 void cleanLazyLoadedTracks(struct LazyTracker *self);
 void uriToId(char *idDest, char *uri); 
 

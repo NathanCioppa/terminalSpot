@@ -350,7 +350,7 @@ static bool episodesHandleSelect(struct Menu *self, int key, char *sourceDir) {
 		if(isExpandOption) {
 			unpost_menu(content->menu);
 	    		set_menu_items(content->menu, NULL);
-			currentLazyTracker->expand(currentLazyTracker, sourceDir);
+			currentLazyTracker->expand(currentLazyTracker, sourceDir, false);
 		    	content->items = currentLazyTracker->tracks;
 	    		set_menu_items(content->menu, content->items);
 	    		post_menu(content->menu);
@@ -432,7 +432,7 @@ static bool likedSongsHandleSelect(struct Menu *self, int key, char *sourceDir) 
         	if (strcmp(item_description(selectedItem), ".") == 0) {
 			unpost_menu(content->menu);
 	    		set_menu_items(content->menu, NULL);
-            		likedSongsTracker->expand(likedSongsTracker, sourceDir);
+            		likedSongsTracker->expand(likedSongsTracker, sourceDir, false);
 
 		    	content->items = likedSongsTracker->tracks;
 	    		set_menu_items(content->menu, content->items);
@@ -469,7 +469,7 @@ static bool albumsHandleSelect(struct Menu *self, int key, char *sourceDir) {
 		if(isExpandOption) {
 			unpost_menu(content->menu);
 	    		set_menu_items(content->menu, NULL);
-			currentLazyTracker->expand(currentLazyTracker, sourceDir);
+			currentLazyTracker->expand(currentLazyTracker, sourceDir, false);
 		    	content->items = currentLazyTracker->tracks;
 	    		set_menu_items(content->menu, content->items);
 	    		post_menu(content->menu);
@@ -524,7 +524,7 @@ static bool handleLazyTrackSelect(struct Menu *self, int key, char *sourceDir) {
 		if(isExpandOption) {
 			unpost_menu(content->menu);
 	    		set_menu_items(content->menu, NULL);
-			currentLazyTracker->expand(currentLazyTracker, sourceDir);
+			currentLazyTracker->expand(currentLazyTracker, sourceDir, false);
 		    	content->items = currentLazyTracker->tracks;
 	    		set_menu_items(content->menu, content->items);
 	    		post_menu(content->menu);

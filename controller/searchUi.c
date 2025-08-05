@@ -17,7 +17,7 @@ static void displaySearchInput();
 static bool validateSearch(char *filterBuf, size_t filterBufSize, char *queryBuf, size_t queryBufSize, char *fullSearchBuf); 
 static void freeSearchItems(struct Menu *self); 
 static bool displaySearchResults(char *filter, FILE *searchResultsNewLineList);
-static bool handleSearchResultSelect(); 
+static bool handleSearchResultSelect(struct Menu *content, int key, char *sourceDir); 
 static void clearSearchDisplay(unsigned int startRow); 
 
 //bool searchInputFocused = false;
@@ -54,7 +54,7 @@ static bool display(char *sourceDir) {
 
 	searchResults->menu = NULL;
 	searchResults->items = NULL;
-	searchResults->setItems = NULL;//&setSearchItems;
+	searchResults->setItems = NULL;
 	searchResults->freeItems = &freeSearchItems;
 	searchResults->handleSelect = &handleSearchResultSelect;
 
@@ -63,10 +63,16 @@ static bool display(char *sourceDir) {
 }
 
 static void close() {
-	if(!content)
-		return;
+	if(content) {
+		content->freeItems(content);
+		free_menu(content->menu);
+		content = NULL;
+	}
 
-	// free content menu and such
+	if(currentLazy) {
+		free(currentLazy);
+		currentLazy = NULL;
+	}
 }
 
 bool initializeSearchUi() {
@@ -77,14 +83,40 @@ bool initializeSearchUi() {
 }
 
 static void freeSearchItems(struct Menu *self) {
-	if(!self->items || !currentLazy->tracks)
+	if(!self->items)
 		return;
-	
-
+	ITEM *item = NULL;
+	for(size_t i=0; (item = self->items[i]); i++) {
+		if(strcmp(item_description(item), ".") != 0) {
+			free((char *)item_name(item));
+			free((char *)item_description(item));
+			free(item_userptr(item));
+		}
+		free_item(item);
+		item = NULL;
+	}
+	free(self->items);
 }
 
-static bool handleSearchResultSelect() {
-	return false;
+static bool handleSearchResultSelect(struct Menu *content, int key, char *sourceDir) {
+	ITEM *selection = current_item(content->menu);
+	bool isExpandOption = strcmp(item_description(selection), ".") == 0;
+	if(key == 10) {
+		if(isExpandOption) {
+			size_t leftOffIndex = item_index(selection);
+			unpost_menu(content->menu);
+			set_menu_items(content->menu, NULL);
+			currentLazy->expand(currentLazy, sourceDir, true);
+			
+			content->items = currentLazy->tracks;
+			set_menu_items(content->menu, content->items);
+			post_menu(content->menu);
+			set_current_item(content->menu, content->items[leftOffIndex]);
+			return true;
+		}
+		
+	}
+	return true;
 }
 
 static void handleKeypress(int key, char *sourceDir) {
@@ -179,23 +211,10 @@ static bool displaySearchResults(char *filter, FILE *searchResultsNewLineList) {
 	unpost_menu(content->menu);
 	set_menu_items(content->menu, NULL);
 	currentLazy->clean(currentLazy);
-	//clearSearchDisplay(1);
 	content->items = newLazy->tracks;
 	currentLazy = newLazy;
 	set_menu_items(content->menu, content->items);
 	post_menu(content->menu);
 	return true;
-}
-
-static void clearSearchDisplay(unsigned int startRow) {
-	unsigned int line = startRow;
-	int maxY;
-	maxY = getmaxy(searchUi->window);
-	while(line < maxY) {
-		printf("AAAA\n");
-		//wmove(searchUi->window, line, 0);  // Move to beginning of the line
-       		//wclrtoeol(searchUi->window);  
-		line++;
-	}
 }
 
