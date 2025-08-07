@@ -13,9 +13,11 @@
 #include "libraryUi.h"
 #include "searchUi.h"
 
+enum universalResult {CONTROL_RAN, NO_CONTROL_RAN, EXIT_UI_LOOPER};
+
 static bool drawName(char *sourceDir);
 static size_t getMinMenuWidth(ITEM **items, size_t menuMarkLen);
-static bool universalControl(char key, char *sourceDir);
+static enum universalResult universalControl(char key, char *sourceDir);
 static bool switchWindow(struct Window *nextWin, char *sourceDir);
 
 WINDOW *headerWINDOW;
@@ -31,6 +33,7 @@ struct Menu *backLazy = NULL;
 char *lazyContext = NULL;
 char *backLazyContext = NULL;
 const unsigned int headerHeight = 2;
+
 
 // Returns true if initialization is successful, and ncurses mode is entered.
 // On a false return, ncurses mode is ended.
@@ -80,45 +83,53 @@ void runUiLooper(char *sourceDir) {
 	keypad(currentWin->window, TRUE);
 	
 	int key;
+	enum universalResult signal;
 	while((key = wgetch(currentWin->window))) {
-		if(universalControl(key, sourceDir))
-			continue; // universal controls can re-assign currentWin 
-
-		currentWin->handleKeypress(key, sourceDir);
+		signal = universalControl(key, sourceDir);
+		switch(signal) {
+			case CONTROL_RAN:
+				break;
+			case NO_CONTROL_RAN:
+				currentWin->handleKeypress(key, sourceDir);
+				break;
+			case EXIT_UI_LOOPER:
+				return;
+			break;
+		}
 	}
-
 }
 
-static bool universalControl(char key, char *sourceDir) {
+static enum universalResult universalControl(char key, char *sourceDir) {
 	switch(key) {
 		case 'd':
 			if(currentWin != devicesWin)
 				switchWindow(devicesWin, sourceDir);
-			return true;
+			return CONTROL_RAN;
 			break;
 		case 'l':
 			if(currentWin != libraryWin)
 				switchWindow(libraryWin, sourceDir);
-			return true;
+			return CONTROL_RAN;
 			break;
 		case 's':
 			if(currentWin != searchUi)
 				switchWindow(searchUi, sourceDir);
 			searchUi->handleKeypress(key, sourceDir);	
-			return true;
+			return CONTROL_RAN;
 			break;
 		case 'z':
 			shuffleOn();
+			return CONTROL_RAN;
 			break;
 		case 'x':
 			shuffleOff();
+			return CONTROL_RAN;
 			break;
 		case 'q':
-			endwin();
-			exit(0);
+			return EXIT_UI_LOOPER;
 		break;
 	}
-	return false;
+	return NO_CONTROL_RAN;
 }
 
 static bool switchWindow(struct Window *nextWin, char *sourceDir) {

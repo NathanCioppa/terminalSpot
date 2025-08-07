@@ -18,14 +18,29 @@ static bool validateSearch(char *filterBuf, size_t filterBufSize, char *queryBuf
 static void freeSearchItems(struct Menu *self); 
 static bool displaySearchResults(char *filter, FILE *searchResultsNewLineList);
 static bool handleSearchResultSelect(struct Menu *content, int key, char *sourceDir); 
-static void clearSearchDisplay(unsigned int startRow); 
+static void clearSearchDisplay(unsigned int startRow);
 
-//bool searchInputFocused = false;
+static void handleAlbumSelect(ITEM *selection, int key, char *sourceDir);
+static void handlePlaylistSelect(ITEM *selection, int key, char *sourceDir);
+static void handleTrackSelect(ITEM *selection, int key, char *sourceDir);
+static void handleSongSelect(ITEM *selection, int key, char *sourceDir);
+static void handleArtistSelect(ITEM *selection, int key, char *sourceDir);
+static void handleEpisodeSelect(ITEM *selection, int key, char *sourceDir);
+static void handleShowSelect(ITEM *selection, int key, char *sourceDir);
+int defaultPlayFromUri(char *uri);
+void extractUriType(char *uriTypeBuf, char *uri); 
+
 static bool searchRow = 0;
 static bool searchCol = 0;
 static char *searchLabel = "Search:";
 static size_t searchFilterSize = 2;
 static size_t maxSearchQuerySize = 100;
+
+
+struct FilterAction {
+	char *filter;
+	void (*action)(ITEM *selection, int key, char *sourceDir);
+};
 
 static struct Window _searchUi = {
 	.window = NULL,
@@ -39,13 +54,27 @@ static struct Menu *content = NULL;
 
 static struct LazyTracker *currentLazy = NULL;
 
-static char *filterAlbums = "al";
-static char *filterPlaylists = "pl";
-static char *filterTracks = "tr";
-static char *filterSongs = "so";
-static char *filterArtists = "ar";
-static char *filterEpisodes = "ep";
-static char *filterShows = "sh";
+static struct FilterAction filterActionAlbums   = { "al", &handleAlbumSelect };
+static struct FilterAction filterActionPlaylists = { "pl", &handlePlaylistSelect };
+static struct FilterAction filterActionTracks    = { "tr", &handleTrackSelect };
+static struct FilterAction filterActionSongs     = { "so", &handleSongSelect };
+static struct FilterAction filterActionArtists   = { "ar", &handleArtistSelect };
+static struct FilterAction filterActionEpisodes  = { "ep", &handleEpisodeSelect };
+static struct FilterAction filterActionShows     = { "sh", &handleShowSelect };
+
+static struct FilterAction *allFilterActions[] = {
+    &filterActionAlbums,
+    &filterActionPlaylists,
+    &filterActionTracks,
+    &filterActionSongs,
+    &filterActionArtists,
+    &filterActionEpisodes,
+    &filterActionShows,
+    NULL, 
+};
+
+static struct FilterAction *activeFilterAction = NULL;
+
 
 static bool display(char *sourceDir) {
 	struct Menu *searchResults = malloc(sizeof(struct Menu));
@@ -114,8 +143,11 @@ static bool handleSearchResultSelect(struct Menu *content, int key, char *source
 			set_current_item(content->menu, content->items[leftOffIndex]);
 			return true;
 		}
-		
-	}
+		char *uri = item_userptr(selection);
+		defaultPlayFromUri(uri);
+	} 
+	else 
+		activeFilterAction->action(selection, key, sourceDir);
 	return true;
 }
 
@@ -162,6 +194,13 @@ static bool handleSearch(char *sourceDir) {
 	if(!searchResults) 
 		return false;
 
+	struct FilterAction *fa = NULL;
+	for(size_t i=0; (fa=allFilterActions[i]); i++) {
+		if(strcmp(fa->filter, filter) == 0) {
+			activeFilterAction = fa;
+			break;
+		}
+	}
 	return displaySearchResults(filter, searchResults);
 }
 
@@ -216,5 +255,76 @@ static bool displaySearchResults(char *filter, FILE *searchResultsNewLineList) {
 	set_menu_items(content->menu, content->items);
 	post_menu(content->menu);
 	return true;
+}
+
+static void handleAlbumSelect(ITEM *selection, int key, char *sourceDir) {
+
+}
+
+static void handlePlaylistSelect(ITEM *selection, int key, char *sourceDir) {
+    // TODO: Implement playlist selection logic
+}
+
+static void handleTrackSelect(ITEM *selection, int key, char *sourceDir) {
+    // TODO: Implement track selection logic
+}
+
+static void handleSongSelect(ITEM *selection, int key, char *sourceDir) {
+    // TODO: Implement song selection logic
+}
+
+static void handleArtistSelect(ITEM *selection, int key, char *sourceDir) {
+    // TODO: Implement artist selection logic
+}
+
+static void handleEpisodeSelect(ITEM *selection, int key, char *sourceDir) {
+    // TODO: Implement episode selection logic
+}
+
+static void handleShowSelect(ITEM *selection, int key, char *sourceDir) {
+    // TODO: Implement show selection logic
+}
+
+
+int defaultPlayFromUri(char *uri) {
+	char uriType[32] = "\0";
+	extractUriType(uriType, uri);
+	if(uriType[0] == '\0')
+		return -2;
+
+	char *playableContexts[] = {"album","show","playlist","artist", NULL};
+	char *playIndividual[] =  {"track", "episode",NULL};
+
+	char *checkType;
+	for(size_t i=0; (checkType = playableContexts[i]); i++) {
+		if(strcmp(checkType, uriType) == 0)
+			return playContext(uri);	
+	}
+	for(size_t i=0; (checkType = playIndividual[i]); i++) {
+		if(strcmp(checkType, uriType) == 0)
+			return playTrack(uri);
+	}
+	return -1;
+}
+
+void extractUriType(char *uriTypeBuf, char *uri) {
+	bool isReadingType = false;
+	size_t uriTypeStart = 0;
+	for(size_t i=0; uri[i]; i++) {
+		if(!isReadingType && uri[i] == ':') {
+			isReadingType=true;
+			uriTypeStart = i+1;
+		} 
+		else if (isReadingType) {
+			if (uri[i] == ':') {
+				uriTypeBuf[i - uriTypeStart] = '\0';
+				return;
+			} 
+			else {
+				uriTypeBuf[i - uriTypeStart] = uri[i];
+			}
+		}
+	}
+	uriTypeBuf = "\0";
 }
 

@@ -22,11 +22,23 @@ int main() {
 	// sourceDir is the absolute path to the directory containing the main executable.
 	char *sourceDir = dirname(exePath);
 
-	initializeUi(sourceDir);
-	startDefaultWindow(sourceDir);
+	bool success = true;
+	success = initializeUi(sourceDir);
+	if(!success) {
+		endwin();
+		printf("Failed to initialize UI\n");
+		return 1;
+	}
+	success = startDefaultWindow(sourceDir);
+	if(!success) {
+		endwin();
+		printf("Failed to load default window\n");
+		return 1;
+	}
 	runUiLooper(sourceDir);
 
 	endwin();
+	printf("Exited terminalSpot controller\n");
 
 	return 0;
 }
